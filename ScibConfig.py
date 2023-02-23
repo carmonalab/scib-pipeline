@@ -139,7 +139,7 @@ class ParsedConfig:
 
         if type_ == 'unintegrated':
             wildcards["scenario"] = self.get_all_scenarios()
-            wildcards["hvg"] = ["full_feature"]
+            wildcards["hvg"] = ["hvg"]                           # modify to run methods only on hvg
             wildcards["scaling"] = ["unscaled"]
             wildcards["method"] = ["unintegrated"]
             wildcards["o_type"] = ["full"]

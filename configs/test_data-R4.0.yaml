@@ -2,15 +2,15 @@ ROOT: data
 r_env : scib-R4.0
 py_env : scib-pipeline-R4.0
 
-unintegrated_metrics: false
+unintegrated_metrics: true
 
 FEATURE_SELECTION:
-  #hvg: 2000
-  full_feature: 0
+  hvg: 2000
+  #full_feature: 0
 
 SCALING:
   - unscaled
-  #- scaled
+  - scaled
 
 METHODS:
 # python methods
@@ -69,14 +69,77 @@ METHODS:
   seurat:
     R: true
     output_type: full
+  STACAS:
+    R: true
+    output_type: full
+  semiSupSTACAS:
+    R: true
+    output_type: full
+  ownFeatSTACAS:
+    R: true
+    no_scale: true
+    output_type: full
+  ownFeatSemiSupSTACAS:
+    R: true
+    no_scale: true
+    output_type: full
   seuratrpca:
       R: true
       output_type: full
 
 DATA_SCENARIOS:
-  test_data_r4:
-    batch_key: batch
+  # test_data_r4:
+  #   batch_key: batch
+  #   label_key: celltype
+  #   organism: mouse
+  #   assay: expression
+  #   file: data/adata_norm.h5ad
+    
+  human_pancreas:
+    batch_key: tech
+    label_key: celltype
+    organism: human
+    assay: expression
+    file: data/human_pancreas_norm_complexBatch.h5ad
+    
+  tcells_atlas:
+    batch_key: Study
     label_key: celltype
     organism: mouse
     assay: expression
-    file: data/adata_norm.h5ad
+    file: data/tcells.h5ad
+
+  lung_atlas:
+    batch_key: batch
+    label_key: cell_type
+    organism: human
+    assay: expression
+    file: data/Lung_atlas_public.h5ad
+  #
+  immune_cell_hum:
+    batch_key: batch
+    label_key: final_annotation
+    organism: human
+    assay: expression
+    file: data/Immune_ALL_human.h5ad
+  # 
+  immune_cell_hum_mou:
+    batch_key: batch
+    label_key: final_annotation
+    organism: human
+    assay: expression
+    file: data/Immune_ALL_hum_mou.h5ad
+  #   
+  simulations_1_1:
+    batch_key: Batch
+    label_key: Group
+    organism: human
+    assay: simulation
+    file: data/sim1_1_norm.h5ad
+  #   
+  simulations_2:
+    batch_key: SubBatch
+    label_key: Group
+    organism: human
+    assay: simulation
+    file: data/sim2_norm.h5ad

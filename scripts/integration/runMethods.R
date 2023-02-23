@@ -18,6 +18,7 @@ option_list <- list(make_option(c("-m", "--method"), type="character", default=N
 		    make_option(c("-i", "--input"), type="character", default=NA, help="input data"),
 		    make_option(c("-o", "--output"), type="character", default=NA, help="output file"),
 		    make_option(c("-b", "--batch"), type="character", default=NA, help="batch variable"),
+		    make_option(c("-c", "--celltype"), type="character", default=NA, help="cell type variable"),
 		    make_option(c("-v", "--hvg"), type="character", default=NA, help="hvg list for seurat"))
 
 
@@ -36,6 +37,50 @@ if(opt$method=='seurat'){
 	}
 
 	out = runSeurat(sobj, opt$b, hvg)
+}
+
+if(opt$method=='STACAS'){
+  if(!is.na(opt$hvg)) {
+    hvg<-unlist(readRDS(opt$hvg), use.names=FALSE)
+  }
+  else {
+    hvg <- rownames(sobj@assays$RNA)
+  }
+  
+  out = runSTACAS(sobj, opt$b, hvg)
+}
+
+if(opt$method=='ownFeatSTACAS'){
+  if(!is.na(opt$hvg)) {
+    hvg<-unlist(readRDS(opt$hvg), use.names=FALSE)
+  }
+  else {
+    hvg <- rownames(sobj@assays$RNA)
+  }
+  
+  out = runOwnFeaturesSTACAS(sobj, opt$b, hvg)
+}
+
+if(opt$method=='semiSupSTACAS'){
+  if(!is.na(opt$hvg)) {
+    hvg<-unlist(readRDS(opt$hvg), use.names=FALSE)
+  }
+  else {
+    hvg <- rownames(sobj@assays$RNA)
+  }
+  
+  out = runSemiSupSTACAS(sobj, opt$b, hvg,opt$c)
+}
+
+if(opt$method=='ownFeatSemiSupSTACAS'){
+  if(!is.na(opt$hvg)) {
+    hvg<-unlist(readRDS(opt$hvg), use.names=FALSE)
+  }
+  else {
+    hvg <- rownames(sobj@assays$RNA)
+  }
+  
+  out = runOwnFeaturesSemiSupSTACAS(sobj, opt$b, hvg,opt$c)
 }
 
 if(opt$method=='seuratrpca'){

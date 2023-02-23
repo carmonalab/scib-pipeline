@@ -50,6 +50,7 @@ rule integration_run_r:
         """
     params:
         batch_key = lambda w: cfg.get_from_scenario(w.scenario, key="batch_key"),
+        celltype_key = lambda w: cfg.get_from_scenario(w.scenario, key="label_key"),
         hvgs      = lambda w: cfg.get_hvg(w, rules.integration_prepare.output, prep="RDS"),
         cmd       = f"conda run --no-capture-output -n {cfg.r_env} Rscript",
     benchmark:
@@ -57,7 +58,7 @@ rule integration_run_r:
     shell:
         """
         {params.cmd} scripts/integration/runMethods.R -i {input.adata} \
-            -o {output} -b {params.batch_key} \
+            -o {output} -b {params.batch_key} -c {params.celltype_key} \
             --method {wildcards.method} {params.hvgs}
         """
 
