@@ -1,0 +1,163 @@
+ROOT: data
+r_env : scib-R4.1
+py_env : scib-pipeline-R4.1
+
+unintegrated_metrics: false
+
+FEATURE_SELECTION:
+  hvg: 2000
+  #full_feature: 0
+  
+NOISE_PERCENTS:
+  - 10
+  - 20
+  - 50
+
+SCALING:
+  - unscaled
+  #- scaled
+
+METHODS:
+# python methods
+  # bbknn:
+  #   output_type: knn
+  # combat:
+  #   output_type: full
+  #desc:
+  #  output_type: embed
+#  mnn:
+#    output_type: full
+  #saucie:
+  #  output_type:
+  #    - full
+  #    - embed
+  # scanorama:
+  #   output_type:
+  #     - embed
+  #     - full
+  scanvi:
+    output_type: embed
+    no_scale: true
+    use_celltype: true
+  scgen:
+    output_type: full
+    use_celltype: true
+  # scvi:
+  #   no_scale: true
+  #   output_type: embed
+  #trvae:
+  #  no_scale: true
+  # output_type:
+  #    - embed
+  #    - full
+  # trvaep:
+  #   no_scale: true
+  #   output_type:
+  #     - embed
+  #     - full
+# R methods
+  #conos: # temporary directory issue
+  #  R: true
+  #  output_type: knn
+  # fastmnn:
+  #   R: true
+  #   output_type:
+  #     - embed
+  #     - full
+  # harmony:
+  #   R: true
+  #   output_type: embed
+  # liger:
+  #   no_scale: true
+  #   R: true
+  #   output_type: embed
+  # seurat:
+  #   R: true
+  #   output_type:
+  #     - embed
+  #     - full
+  # STACAS:
+  #   R: true
+  #   output_type:
+  #     - embed
+  #     - full
+  semiSupSTACAS:
+    R: true
+    use_celltype: true
+    output_type:
+      - embed
+      #- full
+  # ownFeatSTACAS:
+  #   R: true
+  #   no_scale: true
+  #   output_type:
+  #     - embed
+  #     - full
+  # ownFeatSemiSupSTACAS:
+  #   R: true
+  #   no_scale: true
+  #   output_type:
+  #     - embed
+  #     - full
+  # seuratrpca:
+  #     R: true
+  #     output_type:
+  #     - embed
+  #     - full
+
+DATA_SCENARIOS:
+  # test_data_r4:
+  #   batch_key: batch
+  #   label_key: celltype
+  #   organism: mouse
+  #   assay: expression
+  #   file: data/adata_norm.h5ad
+    
+  human_pancreas:
+    batch_key: tech
+    label_key: celltype
+    organism: human
+    assay: expression
+    file: data/human_pancreas_norm_complexBatch.h5ad
+    
+  tcells_atlas:
+    batch_key: Study
+    label_key: celltype
+    organism: mouse
+    assay: expression
+    file: data/tcells.h5ad
+
+  # lung_atlas:
+  #   batch_key: batch
+  #   label_key: cell_type
+  #   organism: human
+  #   assay: expression
+  #   file: data/Lung_atlas_public.h5ad
+  #
+  immune_cell_hum:
+    batch_key: batch
+    label_key: final_annotation
+    organism: human
+    assay: expression
+    file: data/Immune_ALL_human.h5ad
+  # 
+  # immune_cell_hum_mou:
+  #   batch_key: batch
+  #   label_key: final_annotation
+  #   organism: human
+  #   assay: expression
+  #   file: data/Immune_ALL_hum_mou.h5ad
+  #   
+  # simulations_1_1:
+  #   batch_key: Batch
+  #   label_key: Group
+  #   organism: human
+  #   assay: simulation
+  #   file: data/sim1_1_norm.h5ad
+  # #   
+  # simulations_2:
+  #   batch_key: SubBatch
+  #   label_key: Group
+  #   organism: human
+  #   assay: simulation
+  #   file: data/sim2_norm.h5ad
