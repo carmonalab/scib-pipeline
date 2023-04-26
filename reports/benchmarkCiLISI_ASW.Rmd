@@ -1,0 +1,311 @@
+---
+title: "integrationBenchmarkReport"
+author: "Leonard Herault"
+date: '2022-12-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## libraries
+
+```{r cars}
+library(ggplot2)
+library(Seurat)
+library(ggrepel)
+```
+
+
+
+
+```{bash}
+#cp visualization/scIB_knit_table.R ../scib-pipeline/reports/
+#mv scIB_knit_table.R knit_table.R
+```
+
+```{r}
+# install.packages('dynutils')
+# install.packages('magick')
+# install.packages('cowplot')
+# install.packages("ggforce")
+# install.packages('ggimage')
+# install.packages('Hmisc')
+# install.packages("plyr")
+#source('../../scib-reproducibility/visualization/plotSingleTaskRNA.R')
+
+
+library(tibble)
+library(RColorBrewer)
+library(dynutils)
+library(stringr)
+library(Hmisc)
+library(plyr)
+
+
+source("knit_table.R") # Please put knit_table.R in your working dir
+
+source("R_fun_report.R")
+
+
+```
+
+```{r}
+library(STACAS)
+library(Seurat)
+library(scIntegrationMetrics)
+```
+
+
+
+
+```{r}
+metricsR <- read.csv("../data/metrics_R.csv",row.names = 1)
+
+scenarios <- str_split_fixed(rownames(metricsR),pattern = "/",n=6)
+head(scenarios)
+
+scenarios <- scenarios[,-1]
+colnames(scenarios) <- c("task","folder","scaling","features","method")
+metricsR <- cbind(scenarios,metricsR)
+
+metricsR$method <- str_split_fixed(metricsR$method,pattern = "/",n=2)[,2]
+metricsR$output <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,2]
+metricsR$tool <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,1]
+
+head(metricsR)
+```
+
+
+
+
+```{r}
+metrics <- read.csv("../data/metrics.csv",row.names = 1)
+metricsShort <- metrics[,!colnames(metrics) %in% c("hvg_overlap","cell_cycle_conservation")]
+write.csv(metricsShort,"../data/metricsShort.csv")
+
+scenarios <- str_split_fixed(rownames(metrics),pattern = "/",n=6)
+head(scenarios)
+
+scenarios <- scenarios[,-1]
+colnames(scenarios) <- c("task","folder","scaling","features","method")
+metrics <- cbind(scenarios,metrics)
+
+metrics$output <- str_split_fixed(metrics$method,pattern = "_",n=2)[,2]
+metrics$tool <- str_split_fixed(metrics$method,pattern = "_",n=2)[,1]
+
+head(metrics)
+
+```
+
+```{r}
+rownames(metricsR) <- gsub(rownames(metricsR),pattern = "/R/",replacement = "/")
+metrics <- cbind(metrics, metricsR[rownames(metrics),c("CiLISI","CiLISI_means")])
+metrics$ASW_label_raw <- 2*metrics$ASW_label - 1
+
+metrics$methodLong <- paste(metrics$method,metrics$scaling,sep = "_")
+
+```
+
+
+```{r fig.width=3.5,fig.width=3.5}
+methodToCompare <- c("STACAS_embed_unscaled","STACAS_embed_scaled",
+                     "semiSupSTACAS_embed_unscaled","semiSupSTACAS_embed_scaled",
+                     "seuratrpca_embed_unscaled","seuratrpca_embed_scaled",
+                     "seurat_embed_unscaled","seurat_embed_scaled",
+                     "fastmnn_embed_scaled","fastmnn_embed_unscaled",
+                     "harmony_embed_unscaled","harmony_embed_scaled",
+                      "scvi_embed_unscaled",
+                     "scanorama_embed_scaled","scanorama_embed_unscaled",
+                     "scanvi_embed_unscaled",
+                     "combat_full_scaled","combat_full_unscaled",
+                     "scgen_full_unscaled","unintegrated_full_unscaled"
+                     )
+for (t in unique(metrics$task)) {
+  plot(ggplot(metrics[metrics$task == t & metrics$methodLong %in% methodToCompare,],
+         aes(x = CiLISI,color=tool,y=ASW_label_raw,shape= scaling)) +geom_point() + facet_wrap("~task",scales = "free",ncol = 2) +
+  geom_label_repel(aes(label = paste0(tool,"_",scaling)),
+                  box.padding   = 0.35, 
+                  point.padding = 0.5,
+                  segment.color = 'grey50') + NoLegend())
+}
+```
+
+
+```{r}
+library(ggpubr)
+
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=kBET,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor()
+
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=iLISI,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor()
+
+```
+```{r}
+
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=kBET,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor(method = "spearman")
+
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=iLISI,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor(method = "spearman")
+```
+```{r}
+ggplot(data = metrics[metrics$methodLong %in% methodToCompare,],aes(x= ASW_label_raw,y=ASW_label)) + geom_point() + xlim(c(-1,1)) + ylim(c(0,1))
+```
+
+
+
+# Only CiLISI and ASW_label different normalisation, no gene matrix for seurat based methods, 
+
+```{r}
+metricsCiLISIlabelASW <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full"),]
+metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label")]
+
+#metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label_raw")] 
+
+#metricsCiLISIlabelASW$ASW_label_raw[metricsCiLISIlabelASW$ASW_label_raw < 0] <- 0
+
+colnames(metricsCiLISIlabelASW) <- c("iLISI","ASW_label")
+dir.create("CiLISIlabelASW/singleTask",recursive = T)
+dir.create("CiLISIlabelASW/best")
+
+write.csv(metricsCiLISIlabelASW,"CiLISIlabelASW/metrics.csv",col.names = T)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "CiLISIlabelASW/metrics.csv",
+  outdir = "CiLISIlabelASW",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = F, keepBestOutput = F
+)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "CiLISIlabelASW/metrics.csv",
+  outdir = "CiLISIlabelASW/best",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = T, keepBestOutput = T
+)
+
+
+
+plotSingleTaskRNA("CiLISIlabelASW/metrics.csv",outdir = "CiLISIlabelASW/singleTask")
+
+```
+
+
+
+
+```{r}
+
+metricsCiLISIlabelASW_all <- metrics[,c("CiLISI","ASW_label")]
+
+#metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label_raw")] 
+
+#metricsCiLISIlabelASW$ASW_label_raw[metricsCiLISIlabelASW$ASW_label_raw < 0] <- 0
+
+colnames(metricsCiLISIlabelASW_all) <- c("iLISI","ASW_label")
+dir.create("CiLISIlabelASW_all/singleTask",recursive = T)
+dir.create("CiLISIlabelASW_all/best")
+
+write.csv(metricsCiLISIlabelASW_all,"CiLISIlabelASW_all/metrics.csv",col.names = T)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "CiLISIlabelASW_all/metrics.csv",
+  outdir = "CiLISIlabelASW_all",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = F, keepBestOutput = F
+)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "CiLISIlabelASW_all/metrics.csv",
+  outdir = "CiLISIlabelASW_all/best",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = T, keepBestOutput = T
+)
+
+
+
+plotSingleTaskRNA("CiLISIlabelASW_all/metrics.csv",outdir = "CiLISIlabelASW_all/singleTask")
+
+```
+
+```{r}
+oriMetrics <- colnames(read.csv("../data/metrics.csv",row.names = 1))
+oriMetrics <- oriMetrics[oriMetrics != "hvg_overlap"]
+ 
+metricsMethodOK <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full"),
+                           oriMetrics]
+
+#metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label_raw")] 
+
+#metricsCiLISIlabelASW$ASW_label_raw[metricsCiLISIlabelASW$ASW_label_raw < 0] <- 0
+
+dir.create("oriMetrics/singleTask",recursive = T)
+dir.create("oriMetrics/best")
+
+write.csv(metricsMethodOK,"oriMetrics/metrics.csv",col.names = T)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "oriMetrics/metrics.csv",
+  outdir = "oriMetrics",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = F, keepBestOutput = F
+)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "oriMetrics/metrics.csv",
+  outdir = "oriMetrics/best",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = T, keepBestOutput = T
+)
+
+
+
+plotSingleTaskRNA("oriMetrics/metrics.csv",outdir = "oriMetrics/singleTask")
+
+```
