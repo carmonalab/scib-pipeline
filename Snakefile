@@ -16,6 +16,7 @@ rule all:
     input:
         rules.integration.input,
         rules.metrics.output,
+        rules.metrics_R.output,
         rules.embeddings.output
 
 # ------------------------------------------------------------------------------
