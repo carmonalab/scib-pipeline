@@ -160,6 +160,7 @@ if __name__ == '__main__':
     if not empty_file:
         scib.preprocessing.reduce_data(
             adata_int,
+            pca_comps=30,
             n_top_genes=n_hvgs,
             neighbors=recompute_neighbors,
             use_rep=embed,
@@ -175,7 +176,7 @@ if __name__ == '__main__':
     pcr_ = True
     cell_cycle_ = True
     isolated_labels_ = True
-    hvg_score_ = True
+    hvg_score_ = False
     graph_conn_ = True
     kBET_ = True
     # lisi_ = True
@@ -266,6 +267,9 @@ if __name__ == '__main__':
 
     if verbose:
         print(results)
+    
+    # save adata_int for metrics computation in R
+    sc.write(args.output.strip(".csv")+".h5ad", adata_int)
 
     # save metrics' results
     results.to_csv(args.output)
