@@ -5,7 +5,9 @@ rule metrics_single:
     input:
         u      = lambda w: cfg.get_from_scenario(w.scenario, key="file"),
         i      = lambda w: cfg.get_integrated_for_metrics(rules, w.method)
-    output: cfg.ROOT / "{scenario}/metrics/{scaling}/{hvg}/{method}_{o_type}.csv"
+    output: 
+        metrics = cfg.ROOT / "{scenario}/metrics/{scaling}/{hvg}/{method}_{o_type}.csv",
+        adata = cfg.ROOT / "{scenario}/metrics/{scaling}/{hvg}/{method}_{o_type}.h5ad"
     message:
         """
         Metrics {wildcards}
@@ -21,21 +23,43 @@ rule metrics_single:
     shell:
         """
         {params.cmd} scripts/metrics/metrics.py -u {input.u} -i {input.i} \
-         -o {output} -m {wildcards.method} \
+         -o {output.metrics} -m {wildcards.method} \
          -b {params.batch_key} -l {params.label_key} --type {wildcards.o_type} \
          --hvgs {params.hvgs} --organism {params.organism} --assay {params.assay} -v
+        """
+        
+rule metrics_single_R:
+    input:
+        adata = cfg.ROOT / "{scenario}/metrics/{scaling}/{hvg}/{method}_{o_type}.h5ad"
+    output: 
+        metrics = cfg.ROOT / "{scenario}/metrics/{scaling}/{hvg}/R/{method}_{o_type}.csv",
+    message:
+        """
+        Metrics {wildcards}
+        output: {output}
+        """
+    params:
+        batch_key = lambda wildcards: cfg.get_from_scenario(wildcards.scenario, key="batch_key"),
+        label_key = lambda wildcards: cfg.get_from_scenario(wildcards.scenario, key="label_key"),
+        assay     = lambda wildcards: cfg.get_from_scenario(wildcards.scenario, key="assay"),
+        cmd       = f"conda run --no-capture-output -n {cfg.r_env} Rscript",
+    shell:
+        """
+        {params.cmd} scripts/metrics/runMetrics.R -i {input.adata} \
+         -o {output.metrics} -m {wildcards.method} \
+         -b {params.batch_key} -l {params.label_key} --type {wildcards.o_type}
         """
 
 
 umetr_func, umetr_wildcards = cfg.get_all_wildcards(type_="unintegrated", output_types=True)
 rule metrics_unintegrated:
-    input: expand(rules.metrics_single.output, umetr_func, **umetr_wildcards)
+    input: expand(rules.metrics_single.output.metrics, umetr_func, **umetr_wildcards)
     message: "Collect all unintegrated metrics"
 
 
 metr_func, metr_wildcards = cfg.get_all_wildcards(type_="default", output_types=True)
 rule metrics_integrated:
-    input: expand(rules.metrics_single.output, metr_func, **metr_wildcards)
+    input: expand(rules.metrics_single.output.metrics, metr_func, **metr_wildcards)
     message: "Collect all integrated metrics"
 
 
@@ -52,6 +76,42 @@ rule metrics:
     output:
         cfg.ROOT / "metrics.csv"
     message: "Merge all metrics"
+    params:
+        cmd = f"conda run -n {cfg.py_env} python"
+    shell:
+        """
+        {params.cmd} scripts/metrics/merge_metrics.py -i {input.tables} \
+            -o {output} --root {cfg.ROOT}
+        """
+        
+        
+
+
+umetr_r_func, umetr_r_wildcards = cfg.get_all_wildcards(type_="unintegrated", output_types=True)
+rule metrics_unintegrated_R:
+    input: expand(rules.metrics_single_R.output.metrics, umetr_r_func, **umetr_r_wildcards)
+    message: "Collect all unintegrated metrics"
+
+
+metr_r_func, metr_r_wildcards = cfg.get_all_wildcards(type_="default", output_types=True)
+rule metrics_integrated_R:
+    input: expand(rules.metrics_single_R.output.metrics, metr_r_func, **metr_r_wildcards)
+    message: "Collect all integrated metrics"
+
+
+def all_metrics_R(wildcards):
+    files = rules.metrics_integrated_R.input
+    if cfg.unintegrated_m:
+        files.extend(rules.metrics_unintegrated_R.input)
+    return files
+
+
+rule metrics_R:
+    input:
+        tables = all_metrics_R
+    output:
+        cfg.ROOT / "metrics_R.csv"
+    message: "Merge all metrics computed in R"
     params:
         cmd = f"conda run -n {cfg.py_env} python"
     shell:
