@@ -43,7 +43,7 @@ while getopts "hr:m:q" OPTION; do
 done
 
 # Check R version
-if [[ -z $R_VERSION ]] || [ "$R_VERSION" != "3.6" ] && [ "$R_VERSION" != "4.0" ]; then
+if [[ -z $R_VERSION ]] || (([ "$R_VERSION" != "3.6" ] && [ "$R_VERSION" != "4.0" ]) &&  [ "$R_VERSION" != "4.1" ]); then
   echo "Invalid R version $R_VERSION"
   usage
   exit 1

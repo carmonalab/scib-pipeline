@@ -1,6 +1,6 @@
 ROOT: data
-r_env : scib-R4.0
-py_env : scib-pipeline-R4.0
+r_env : scib-R4.1
+py_env : scib-pipeline-R4.1
 
 unintegrated_metrics: true
 
@@ -14,8 +14,8 @@ SCALING:
 
 METHODS:
 # python methods
-  bbknn:
-    output_type: knn
+  # bbknn:
+  #   output_type: knn
   combat:
     output_type: full
   #desc:
@@ -62,30 +62,42 @@ METHODS:
   harmony:
     R: true
     output_type: embed
-  liger:
-    no_scale: true
-    R: true
-    output_type: embed
+  # liger:
+  #   no_scale: true
+  #   R: true
+  #   output_type: embed
   seurat:
     R: true
-    output_type: full
+    output_type:
+      - embed
+      - full
   STACAS:
     R: true
-    output_type: full
+    output_type:
+      - embed
+      - full
   semiSupSTACAS:
     R: true
-    output_type: full
-  ownFeatSTACAS:
-    R: true
-    no_scale: true
-    output_type: full
-  ownFeatSemiSupSTACAS:
-    R: true
-    no_scale: true
-    output_type: full
+    output_type:
+      - embed
+      - full
+  # ownFeatSTACAS:
+  #   R: true
+  #   no_scale: true
+  #   output_type:
+  #     - embed
+  #     - full
+  # ownFeatSemiSupSTACAS:
+  #   R: true
+  #   no_scale: true
+  #   output_type:
+  #     - embed
+  #     - full
   seuratrpca:
       R: true
-      output_type: full
+      output_type:
+      - embed
+      - full
 
 DATA_SCENARIOS:
   # test_data_r4:
@@ -130,16 +142,16 @@ DATA_SCENARIOS:
     assay: expression
     file: data/Immune_ALL_hum_mou.h5ad
   #   
-  simulations_1_1:
-    batch_key: Batch
-    label_key: Group
-    organism: human
-    assay: simulation
-    file: data/sim1_1_norm.h5ad
-  #   
-  simulations_2:
-    batch_key: SubBatch
-    label_key: Group
-    organism: human
-    assay: simulation
-    file: data/sim2_norm.h5ad
+  # simulations_1_1:
+  #   batch_key: Batch
+  #   label_key: Group
+  #   organism: human
+  #   assay: simulation
+  #   file: data/sim1_1_norm.h5ad
+  # #   
+  # simulations_2:
+  #   batch_key: SubBatch
+  #   label_key: Group
+  #   organism: human
+  #   assay: simulation
+  #   file: data/sim2_norm.h5ad
