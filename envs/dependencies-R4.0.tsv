@@ -1,3 +1,5 @@
 package version how
 conos NA cran
+anndata NA cran
 carmonalab/STACAS NA github
+carmonalab/scIntegrationMetrics NA github
