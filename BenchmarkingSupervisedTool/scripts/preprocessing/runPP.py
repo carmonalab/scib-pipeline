@@ -13,15 +13,36 @@ warnings.filterwarnings('ignore')
 
 np.random.seed(2023)
 
-def shuffle_portion(arr, percentage): 
+def shufflePortion(arr, percentage): 
     shuf = np.random.choice(np.arange(arr.shape[0]),  
                             round(arr.shape[0]*percentage/100), 
                             replace=False) 
     arr[np.sort(shuf)] = arr[shuf] 
     return arr
   
+def unassignPortion(arr, percentage): 
+    shuf = np.random.choice(np.arange(arr.shape[0]),  
+                            round(arr.shape[0]*percentage/100), 
+                            replace=False) 
+    arr[np.sort(shuf)] = 'unknown' 
+    return arr
 
-
+def makePartialAnno(adata, label):
+    """
+    params:
+        adata: adata object
+        label: cell type label column
+    """
+    for n in [10,20,50]:
+      adata.obs["unknown_"+str(n)+"_"+ label] = adata.obs[label].copy()
+      adata.obs["unknown_"+str(n)+"_"+ label] = adata.obs["unknown_"+str(n)+"_"+ label].cat.add_categories(['unknown'])
+      adata.obs["unknown_"+str(n)+"_"+ label] = unassignPortion(adata.obs["unknown_"+str(n)+"_"+ label].values, n)
+    
+    #adata.obs['correct'] = adata.obs["noisy_" + label] == adata.obs[label]
+    #adata.obs["labelling"] = ["correct" if c else "wrong" for c in list(adata.obs['correct'])]
+    # sc.write(outPath, adata)
+    # scib.preprocessing.saveSeurat(adata, outPath, batch)
+    return adata
 
 def makeNoise(adata, label):
     """
@@ -31,7 +52,7 @@ def makeNoise(adata, label):
     """
     for n in [10,20,50]:
       adata.obs["percentShuffling_"+str(n)+"_"+ label] = adata.obs[label].copy()
-      adata.obs["percentShuffling_"+str(n)+"_"+ label] = shuffle_portion(adata.obs["percentShuffling_"+str(n)+"_"+ label].values, n)
+      adata.obs["percentShuffling_"+str(n)+"_"+ label] = shufflePortion(adata.obs["percentShuffling_"+str(n)+"_"+ label].values, n)
     
     #adata.obs['correct'] = adata.obs["noisy_" + label] == adata.obs[label]
     #adata.obs["labelling"] = ["correct" if c else "wrong" for c in list(adata.obs['correct'])]
@@ -80,6 +101,14 @@ def runPP(inPath, outPath, hvg, batch, rout, scale, seurat,label):
     
     print("Making some noise ...")
     adata = makeNoise(adata,label)
+    
+    print("Making partial annotations ...")
+    adata = makePartialAnno(adata,label)
+    
+    # if not any([i.startswith("broad") for i in adata.obs.columns]):
+    #     print("broad annotations not available.")
+    #     print("Adding braod annotations equivalent to original annotations...")
+    #     adata.obs['broad_'+label] = adata.obs[label].copy()
 
     if rout:
         print("Save as RDS")

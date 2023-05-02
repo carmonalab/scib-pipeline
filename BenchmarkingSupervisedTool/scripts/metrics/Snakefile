@@ -6,8 +6,8 @@ rule metrics_single:
         u      = lambda w: cfg.get_from_scenario(w.scenario, key="file"),
         i      = lambda w: cfg.get_integrated_for_metrics(rules, w.method)
     output: 
-        metrics = cfg.ROOT / "{scenario}/percentShuffling_{percent}/metrics/{scaling}/{hvg}/{method}_{o_type}.csv",
-        adata = cfg.ROOT / "{scenario}/percentShuffling_{percent}/metrics/{scaling}/{hvg}/{method}_{o_type}.h5ad"
+        metrics = cfg.ROOT / "{scenario}/{altered_annotation}/metrics/{scaling}/{hvg}/{method}_{o_type}.csv",
+        adata = cfg.ROOT / "{scenario}/{altered_annotation}/metrics/{scaling}/{hvg}/{method}_{o_type}.h5ad"
     message:
         """
         Metrics {wildcards}
@@ -30,9 +30,9 @@ rule metrics_single:
         
 rule metrics_single_R:
     input:
-        adata = cfg.ROOT / "{scenario}/percentShuffling_{percent}/metrics/{scaling}/{hvg}/{method}_{o_type}.h5ad"
+        adata = cfg.ROOT / "{scenario}/{altered_annotation}/metrics/{scaling}/{hvg}/{method}_{o_type}.h5ad"
     output: 
-        metrics = cfg.ROOT / "{scenario}/percentShuffling_{percent}/metrics/{scaling}/{hvg}/R/{method}_{o_type}.csv",
+        metrics = cfg.ROOT / "{scenario}/{altered_annotation}/metrics/{scaling}/{hvg}/R/{method}_{o_type}.csv",
     message:
         """
         Metrics {wildcards}

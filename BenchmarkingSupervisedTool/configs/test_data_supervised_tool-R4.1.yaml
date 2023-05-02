@@ -8,10 +8,14 @@ FEATURE_SELECTION:
   hvg: 2000
   #full_feature: 0
   
-NOISE_PERCENTS:
-  - 10
-  - 20
-  - 50
+ALTERED_ANNOTATIONS:
+  - percentShuffling_10
+  - percentShuffling_20
+  - percentShuffling_50
+  - unknown_10
+  - unknown_20
+  - unknown_50
+  - broad
 
 SCALING:
   - unscaled
@@ -106,58 +110,39 @@ METHODS:
   #     - full
 
 DATA_SCENARIOS:
-  # test_data_r4:
-  #   batch_key: batch
-  #   label_key: celltype
-  #   organism: mouse
-  #   assay: expression
-  #   file: data/adata_norm.h5ad
-    
+
   human_pancreas:
     batch_key: tech
     label_key: celltype
     organism: human
     assay: expression
-    file: data/human_pancreas_norm_complexBatch.h5ad
+    file: data/human_pancreas_norm_complexBatch_with_broad_celltypes.h5ad
     
   tcells_atlas:
     batch_key: Study
     label_key: celltype
     organism: mouse
     assay: expression
-    file: data/tcells.h5ad
+    file: data/tcells_with_broad_celltypes.h5ad
 
-  # lung_atlas:
-  #   batch_key: batch
-  #   label_key: cell_type
-  #   organism: human
-  #   assay: expression
-  #   file: data/Lung_atlas_public.h5ad
+  lung_atlas:
+    batch_key: batch
+    label_key: cell_type
+    organism: human
+    assay: expression
+    file: data/Lung_atlas_public_with_broad_celltypes.h5ad
   #
   immune_cell_hum:
     batch_key: batch
     label_key: final_annotation
     organism: human
     assay: expression
-    file: data/Immune_ALL_human.h5ad
+    file: data/Immune_ALL_human_with_broad_celltypes.h5ad
   # 
-  # immune_cell_hum_mou:
-  #   batch_key: batch
-  #   label_key: final_annotation
-  #   organism: human
-  #   assay: expression
-  #   file: data/Immune_ALL_hum_mou.h5ad
-  #   
-  # simulations_1_1:
-  #   batch_key: Batch
-  #   label_key: Group
-  #   organism: human
-  #   assay: simulation
-  #   file: data/sim1_1_norm.h5ad
-  # #   
-  # simulations_2:
-  #   batch_key: SubBatch
-  #   label_key: Group
-  #   organism: human
-  #   assay: simulation
-  #   file: data/sim2_norm.h5ad
+  immune_cell_hum_mou:
+    batch_key: batch
+    label_key: final_annotation
+    organism: human
+    assay: expression
+    file: data/Immune_ALL_hum_mou_with_broad_celltypes.h5ad
+

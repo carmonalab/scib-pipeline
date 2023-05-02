@@ -99,6 +99,8 @@ runSTACAS = function(data, batch, hvg=2000) {
 
 runSemiSupSTACAS = function(data, batch, hvg=2000,celltype) {
   require(STACAS)
+  #data[[celltype]][data[[celltype]]=="Unknown"] <- "unknown"
+  #droplevels(data[[celltype]][,1])
   batch_list = SplitObject(data, split.by = batch)
   remove(data)
   integrated = Run.STACAS(object.list = batch_list, anchor.features = hvg, dims = 1:30, cell.labels = celltype) 

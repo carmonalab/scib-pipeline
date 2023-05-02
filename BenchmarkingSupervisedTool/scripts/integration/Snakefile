@@ -6,7 +6,7 @@ rule integration_run_python:
     input:
         adata=expand(rules.integration_prepare.output, prep="h5ad", allow_missing=True)
     output:
-        cfg.ROOT / "{scenario}/percentShuffling_{percent}/integration/{scaling}/{hvg}/{method}.h5ad"
+        cfg.ROOT / "{scenario}/{altered_annotation}/integration/{scaling}/{hvg}/{method}.h5ad"
     message:
         """
         Run {wildcards.method} on {wildcards.scaling} data
@@ -26,7 +26,7 @@ rule integration_run_python:
         """
         {params.cmd} scripts/integration/runIntegration.py \
           -i {input.adata} -o {output} \
-	      -b {params.batch_key} --method {wildcards.method} {params.hvgs} -c percentShuffling_{wildcards.percent}_{params.celltype_key}
+	      -b {params.batch_key} --method {wildcards.method} {params.hvgs} -c {wildcards.altered_annotation}_{params.celltype_key}
         """
 
 # ------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ rule integration_run_python:
 rule integration_run_r:
     input:
         adata=expand(rules.integration_prepare.output, prep="RDS", allow_missing=True)
-    output: cfg.ROOT / "{scenario}/percentShuffling_{percent}/integration/{scaling}/{hvg}/R/{method}.RDS"
+    output: cfg.ROOT / "{scenario}/{altered_annotation}/integration/{scaling}/{hvg}/R/{method}.RDS"
     message:
         """
         output: {output[0]}
@@ -54,7 +54,7 @@ rule integration_run_r:
     shell:
         """
         {params.cmd} scripts/integration/runMethods.R -i {input.adata} \
-            -o {output} -b {params.batch_key} -c percentShuffling_{wildcards.percent}_{params.celltype_key} \
+            -o {output} -b {params.batch_key} -c {wildcards.altered_annotation}_{params.celltype_key} \
             --method {wildcards.method} {params.hvgs}
         """
 
@@ -67,7 +67,7 @@ rule convert_RDS_h5ad:
     input:
         i = rules.integration_run_r.output
     output:
-        cfg.ROOT / "{scenario}/percentShuffling_{percent}/integration/{scaling}/{hvg}/R/{method}.h5ad"
+        cfg.ROOT / "{scenario}/{altered_annotation}/integration/{scaling}/{hvg}/R/{method}.h5ad"
     message:
         """
         Convert integrated data from {wildcards.method} into h5ad

@@ -4,8 +4,49 @@
 import scanpy as sc
 import scib
 import warnings
+import numpy as np
 
 warnings.filterwarnings('ignore')
+
+def scanvi(adata, batch, labels, hvg=None, max_epochs=None):
+    """scANVI wrapper function
+    Based on scvi-tools version >=0.16.0 (available through `conda <https://docs.scvi-tools.org/en/stable/installation.html>`_)
+    .. note::
+        Use non-normalized (count) data for scANVI!
+    :param adata: preprocessed ``anndata`` object
+    :param batch: batch key in ``adata.obs``
+    :param labels: label key in ``adata.obs``
+    :param hvg: list of highly variables to subset to. If ``None``, the full dataset will be used
+    :return: ``anndata`` object containing the corrected feature matrix as well as an embedding representation of the
+        corrected data
+    """
+    try:
+        from scvi.model import SCANVI
+    except ModuleNotFoundError as e:
+        raise OptionalDependencyNotInstalled(e)
+
+    # # Defaults from SCVI github tutorials scanpy_pbmc3k and harmonization
+    # this n_epochs_scVI is now default in scvi-tools
+    if max_epochs is None:
+        n_epochs_scVI = int(np.min([round((20000 / adata.n_obs) * 400), 400]))  # 400
+        n_epochs_scANVI = int(np.min([10, np.max([2, round(n_epochs_scVI / 3.0)])]))
+    else:
+        n_epochs_scVI = max_epochs
+        n_epochs_scANVI = max_epochs
+
+    vae = scib.integration.scvi(adata, batch, hvg, return_model=True, max_epochs=n_epochs_scVI)
+
+    # STEP 2: RUN scVI to initialize scANVI
+    scanvae = SCANVI.from_scvi_model(
+        scvi_model=vae,
+        labels_key=labels,
+        unlabeled_category="unknown",  # pick anything definitely not in a dataset
+    )
+    scanvae.train(max_epochs=n_epochs_scANVI, train_size=1.0)
+    adata.obsm["X_emb"] = scanvae.get_latent_representation()
+
+    return adata
+  
 
 def scgen(adata, batch, cell_type, epochs=100, latent_dims = 30, hvg=None, **kwargs):
     """scGen wrapper function
@@ -113,7 +154,7 @@ if __name__ == '__main__':
         'mnn': scib.integration.mnn,
         'bbknn': scib.integration.bbknn,
         'scvi': scib.integration.scvi,
-        'scanvi': scib.integration.scanvi,
+        'scanvi': scanvi,
         'combat': scib.integration.combat,
         'saucie': scib.integration.saucie,
         'desc': scib.integration.desc
