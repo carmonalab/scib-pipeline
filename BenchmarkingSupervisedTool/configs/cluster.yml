@@ -38,6 +38,17 @@
     output : "cluster/snakemake/{rule}.output"
     error : "cluster/snakemake/{rule}.error"
     
+  metrics_single:
+    cpus-per-task : "16"
+    N : "1"
+    time : "6:00:00"
+    name : "{rule}"
+    partition : "cpu"
+    account : "dgfeller_scrnaseq"
+    mem : "64000"
+    output : "cluster/snakemake/{rule}.output"
+    error : "cluster/snakemake/{rule}.error"
+    
     
     
 
