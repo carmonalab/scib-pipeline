@@ -113,6 +113,7 @@ DATA_SCENARIOS:
     organism: human
     assay: expression
     file: data/human_pancreas_norm_complexBatch.h5ad
+    url: https://figshare.com/ndownloader/files/24539828
     
   tcells_atlas:
     batch_key: Study
@@ -120,6 +121,7 @@ DATA_SCENARIOS:
     organism: mouse
     assay: expression
     file: data/tcells.h5ad
+    rds_url: https://www.dropbox.com/s/emxmnwegfniirks/ref_TILAtlas_mouse_wcounts_list_merge_BroadCellType.rds?dl=0
 
   lung_atlas:
     batch_key: batch
@@ -127,21 +129,24 @@ DATA_SCENARIOS:
     organism: human
     assay: expression
     file: data/Lung_atlas_public.h5ad
-  #
+    url: https://figshare.com/ndownloader/files/24539942
+  
   immune_cell_hum:
     batch_key: batch
     label_key: final_annotation
     organism: human
     assay: expression
     file: data/Immune_ALL_human.h5ad
-  # 
+    url: https://figshare.com/ndownloader/files/25717166
+
   immune_cell_hum_mou:
     batch_key: batch
     label_key: final_annotation
     organism: human
     assay: expression
     file: data/Immune_ALL_hum_mou.h5ad
-  #   
+    url: https://figshare.com/ndownloader/files/25717328
+     
   # simulations_1_1:
   #   batch_key: Batch
   #   label_key: Group
