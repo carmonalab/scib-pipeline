@@ -22,12 +22,12 @@ plotSingleTaskRNA <- function(csv_metrics_path, outdir = ".", weight_batch = 0.4
   metrics <- colnames(metrics_tab_lab)[-1]
   metrics <- gsub("\\.", "/", metrics)
   metrics <- gsub("_", " ", metrics)
-  metrics <- plyr::mapvalues(metrics, from = c("ASW label", "ASW label/batch", "cell cycle conservation", "hvg overlap", "trajectory", "graph conn", "iLISI", "cLISI"), 
-                             to = c("Cell type ASW", "Batch ASW", "CC conservation", "HVG conservation", "trajectory conservation", "graph connectivity", "graph iLISI", "graph cLISI"))
+  metrics <- plyr::mapvalues(metrics, from = c("ASW label", "ASW label/batch", "cell cycle conservation", "hvg overlap", "trajectory", "graph conn", "iLISI", "cLISI","CiLISI"), 
+                             to = c("Cell type ASW", "Batch ASW", "CC conservation", "HVG conservation", "trajectory conservation", "graph connectivity", "graph iLISI", "graph cLISI", "Cell type iLISI"))
   
   
   # metrics names as they are supposed to be ordered
-  group_batch <- c("PCR batch", "Batch ASW", "graph iLISI", "graph connectivity", "kBET")
+  group_batch <- c("PCR batch", "Batch ASW", "graph iLISI","Cell type iLISI", "graph connectivity", "kBET")
   group_bio <- c("NMI cluster/label", "ARI cluster/label", "Cell type ASW", 
                  "isolated label F1", "isolated label silhouette", "graph cLISI", "CC conservation", "HVG conservation", "trajectory conservation")
   # set original values of number of metrics
@@ -81,7 +81,7 @@ plotSingleTaskRNA <- function(csv_metrics_path, outdir = ".", weight_batch = 0.4
     
     methods_name <- plyr::mapvalues(methods_name, 
                                     from = c("Seurat", "Seuratrpca", "Bbknn", "Scvi", "Liger", "Combat", "Fastmnn", "Scanvi", "Scgen","STACAS","SemiSupSTACAS","OwnFeatSTACAS","OwnFeatSemiSupSTACAS"), 
-                                    to = c("Seurat v3 CCA", "Seurat v3 RPCA", "BBKNN", "scVI", "LIGER", "ComBat", "fastMNN", "scANVI*", "scGen*","STACAS","ssSTACAS*", "STACAS (owf)","ssSTACAS (owf)*"))
+                                    to = c("Seurat v4 CCA", "Seurat v4 RPCA", "BBKNN", "scVI", "LIGER", "ComBat", "fastMNN", "scANVI*", "scGen*","STACAS","ssSTACAS*", "STACAS (owf)","ssSTACAS (owf)*"))
     
     
     method_groups <- sapply(str_split(methods, "_"), function(x) x[2])
@@ -207,7 +207,7 @@ plotBestMethodsRNA <- function(csv_metrics_path,
   
   
   # metrics names as they are supposed to be ordered
-  group_batch <- c("PCR batch", "Batch ASW", "iLISI", "graph connectivity", "kBET")
+  group_batch <- c("PCR batch", "Batch ASW", "iLISI","CiLISI", "graph connectivity", "kBET")
   group_bio <- c("NMI cluster/label", "ARI cluster/label", "Cell type ASW", 
                  "isolated label F1", "isolated label silhouette", "CC conservation", "HVG conservation", "trajectory conservation","cLISI")
   # set original values of number of metrics
@@ -259,7 +259,7 @@ plotBestMethodsRNA <- function(csv_metrics_path,
     
     methods_name <- plyr::mapvalues(methods_name, 
                                     from = c("Seurat", "Seuratrpca", "Bbknn", "Scvi", "Liger", "Combat", "Fastmnn", "Scanvi", "Scgen","STACAS","SemiSupSTACAS","OwnFeatSTACAS","OwnFeatSemiSupSTACAS"), 
-                                    to = c("Seurat v3 CCA", "Seurat v3 RPCA", "BBKNN", "scVI", "LIGER", "ComBat", "fastMNN", "scANVI*", "scGen*","STACAS","ssSTACAS*", "STACAS (owf)","ssSTACAS (owf)*"))
+                                    to = c("Seurat v4 CCA", "Seurat v4 RPCA", "BBKNN", "scVI", "LIGER", "ComBat", "fastMNN", "scANVI*", "scGen*","STACAS","ssSTACAS*", "STACAS (owf)","ssSTACAS (owf)*"))
     
     
     method_groups <- sapply(str_split(methods, "_"), function(x) x[2])
@@ -307,7 +307,7 @@ plotBestMethodsRNA <- function(csv_metrics_path,
     scaled_metrics_tab <- as.matrix(metrics_tab[, -1])
     scaled_metrics_tab <- apply(scaled_metrics_tab, 2, function(x) scale_minmax(x))
     
-
+    
     # calculate average score by group and overall
     score_group_batch <- rowMeansIf(scaled_metrics_tab[, 1:n_metrics_batch])
     score_group_bio <- rowMeansIf(scaled_metrics_tab[, (1+n_metrics_batch):ncol(scaled_metrics_tab)])
@@ -333,9 +333,12 @@ plotBestMethodsRNA <- function(csv_metrics_path,
   
   methods.table.merged <- merge(methods.table.list[[1]], methods.table.list[[2]], by = c("Method", "Output", "Features", "Scaling"),
                                 all = T)
-  for(i in 3:length(methods.table.list)){
-    methods.table.merged <- merge(methods.table.merged, methods.table.list[[i]], by = c("Method", "Output", "Features", "Scaling"),
-                                  all = T)
+  print(length(methods.table.list))
+  if(length(methods.table.list) > 2) {
+    for(i in 3:length(methods.table.list)){
+      methods.table.merged <- merge(methods.table.merged, methods.table.list[[i]], by = c("Method", "Output", "Features", "Scaling"),
+                                    all = T)
+    }
   }
   
   # Rename columns
@@ -369,7 +372,7 @@ plotBestMethodsRNA <- function(csv_metrics_path,
   if (keepBest) {
     keep.best <- NULL
     for(met in unique(atlas.ranks$Method)){
-      if(met %in% c("Scanorama", "fastMNN", "SAUCIE","Seurat v3 CCA","Seurat V3 RPCA", "ssSTACAS*", "STACAS") & !keepBestOutput ){
+      if(met %in% c("Scanorama", "fastMNN", "SAUCIE","Seurat v4 CCA","Seurat v4 RPCA", "ssSTACAS*", "STACAS") & !keepBestOutput ){
         keep.best <- c(keep.best, which(atlas.rank.ord$Method == met & atlas.rank.ord$Output == "gene")[1])
         keep.best <- c(keep.best, which(atlas.rank.ord$Method == met & atlas.rank.ord$Output == "embed")[1])
       } else{
@@ -410,8 +413,8 @@ plotBestMethodsRNA <- function(csv_metrics_path,
   #   filter(!(methods %in% c("ComBat", "MNN")))
   # usability_mat$methods <- mapvalues(usability_mat$methods, from = c("ComBat (Scanpy)", "MNNpy"), 
   #                                    to = c("ComBat", "MNN"))
-  # methods_best <- mapvalues(best_methods_tab$Method, from= c("Seurat v3 RPCA", "Seurat v3 CCA"), 
-  #                           to = c("Seurat v3", "Seurat v3"))
+  # methods_best <- mapvalues(best_methods_tab$Method, from= c("Seurat v4 RPCA", "Seurat v4 CCA"), 
+  #                           to = c("Seurat v4", "Seurat v4"))
   # best_methods_tab$`Usability Package` <- usability_mat[match(tolower(methods_best), 
   #                                                         tolower(usability_mat$methods)), "Package"]
   # best_methods_tab$`Usability Paper` <- usability_mat[match(tolower(methods_best), 
@@ -427,7 +430,7 @@ plotBestMethodsRNA <- function(csv_metrics_path,
     
     # create comparable strings out of best_methods
     hvg_full <- mapvalues(best_methods_tab$Features, from = c("HVG", "FULL"), to = c("hvg", "full_feature"))
-    methods_string0 <- tolower(mapvalues(best_methods_tab$Method, from = c("Seurat v3 RPCA", "Seurat v3 CCA"),
+    methods_string0 <- tolower(mapvalues(best_methods_tab$Method, from = c("Seurat v4 RPCA", "Seurat v4 CCA"),
                                          to = c("seuratrpca", "seurat")))
     print(methods_string0)
     
@@ -435,7 +438,7 @@ plotBestMethodsRNA <- function(csv_metrics_path,
     #best_methods_tab2 <- stringr::str_split_fixed(string = best_methods_tab$Method,pattern = '/',n=3)[,3]
     methods_string <- plyr::mapvalues(best_methods_tab$Method,
                                       to = c("seurat", "seuratrpca", "bbknn", "scvi", "liger", "combat", "fastmnn", "scanvi", "scgen","STACAS","semiSupSTACAS","ownFeatSTACAS","ownFeatSemiSupSTACAS","scanorama",'harmony','unintegrated'),
-                                      from = c("Seurat v3 CCA", "Seurat v3 RPCA", "BBKNN", "scVI", "LIGER", "ComBat", "fastMNN", "scANVI*", "scGen*","STACAS","ssSTACAS*", "STACAS (owf)","ssSTACAS (owf)*","Scanorama",'Harmony','Unintegrated'))
+                                      from = c("Seurat v4 CCA", "Seurat v4 RPCA", "BBKNN", "scVI", "LIGER", "ComBat", "fastMNN", "scANVI*", "scGen*","STACAS","ssSTACAS*", "STACAS (owf)","ssSTACAS (owf)*","Scanorama",'Harmony','Unintegrated'))
     
     best_method_string <- paste0(best_methods_tab$Scaling, "/", hvg_full, "/", methods_string)
     print(methods_string)

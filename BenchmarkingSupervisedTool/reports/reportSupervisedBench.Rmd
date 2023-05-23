@@ -17,50 +17,28 @@ knitr::opts_chunk$set(echo = FALSE,comment = FALSE,warning = FALSE)
 library(ggplot2)
 library(Seurat)
 library(ggrepel)
-```
-
-
-
-
-```{bash}
-#cp visualization/scIB_knit_table.R ../scib-pipeline/reports/
-#mv scIB_knit_table.R knit_table.R
-```
-
-```{r}
-# install.packages('dynutils')
-# install.packages('magick')
-# install.packages('cowplot')
-# install.packages("ggforce")
-# install.packages('ggimage')
-# install.packages('Hmisc')
-# install.packages("plyr")
-#source('../../scib-reproducibility/visualization/plotSingleTaskRNA.R')
-
-
 library(tibble)
 library(RColorBrewer)
 library(dynutils)
 library(stringr)
 library(Hmisc)
 library(plyr)
-
-
-# source("knit_table.R") # Please put knit_table.R in your working dir
-# 
-# source("R_fun_report.R")
-
-
-```
-
-```{r}
-library(STACAS)
-library(Seurat)
-library(scIntegrationMetrics)
+# library(STACAS)
+# library(Seurat)
+# library(scIntegrationMetrics)
 library(anndata)
 ```
 
+
+This report requires the files :
+
+-   `../data/metrics_R.csv`
+-   `../data/metrics.csv`
+
+generated with the `BenchmarkingSupervisedTool` snakemake pipeline that are available in `BenchmarkingSupervisedTool/results` (you can simply copy paste them in a subdirectory `data` in the `BenchmarkingSupervisedTool` directory of the repository).
+
 ## Compute true mislabelling rates
+This chunk requires the preprocessed anndata objects `../data/*/prepare/unscaled/hvg/adata_pre.h5ad` for each integration task generated with the `BenchmarkingSupervisedTool` snakemake pipeline.
 ```{r}
 misRateTable <- data.frame()
 celltypeLabel = c("celltype","celltype","final_annotation","cell_type")
@@ -83,7 +61,7 @@ ggplot(misRateTable, aes(x = percentShuffling , y = percentMislabelling, fill = 
 ```
 
 
-
+## Integration metric loading
 
 ```{r}
 metricsR <- read.csv("../data/metrics_R.csv",row.names = 1)
@@ -125,10 +103,7 @@ metricsR_unaltered$tool <- str_split_fixed(metricsR_unaltered$method,pattern = "
 
 metricsR_unaltered$altered_annotations = "None"
 
-#head(metricsR_unaltered)
-
 metricsR <- rbind(metricsR,metricsR_unaltered[,colnames(metricsR)])
-#metricsR
 ```
 
 
@@ -176,15 +151,12 @@ metrics_unaltered$tool <- str_split_fixed(metrics_unaltered$method,pattern = "_"
 
 metrics_unaltered$altered_annotations = "None"
 
-#head(metrics_unaltered)
-
 metrics <- rbind(metrics,metrics_unaltered[,colnames(metrics)])
-#metrics
-
-
-
-
 ```
+
+# label shuffling analysis
+
+## ASW label score
 
 ```{r}
 metrics$altered_annotations <- factor(metrics$altered_annotations,levels = c("None", "broad",
@@ -194,6 +166,8 @@ metrics$ASW_label_raw <- 2*metrics$ASW_label-1
 ggplot(metrics[grepl(metrics$altered_annotations,pattern = "percentShuffling|None"),],aes(x = altered_annotations,color=method,y=ASW_label_raw,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
+
+## CiLISI score
 ```{r}
 metricsR$altered_annotations <- factor(metricsR$altered_annotations,levels = c("None", "broad",
                                                                              "percentShuffling_10","percentShuffling_20","percentShuffling_50","percentShuffling_100",
@@ -203,31 +177,41 @@ ggplot(metricsR[grepl(metricsR$altered_annotations,pattern = "percentShuffling|N
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
 
+# Partial annotation analysis
+
+## ASW label score
 ```{r}
 ggplot(metrics[grepl(metrics$altered_annotations,pattern = "unknown|None"),],aes(x = altered_annotations,color=method,y=ASW_label_raw,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
+
+## CiLISI score
+
 ```{r}
 ggplot(metricsR[grepl(metricsR$altered_annotations,pattern = "unknown|None"),],aes(x = altered_annotations,color=method,y=CiLISI,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
-```{r}
+# Broad annotation analysis
 
+None (no altered annotations) refers to the original fine annotations.
+Please note that for lung and pancreas tasks broad and fine annotations are the same.
+
+## ASW label score
+
+```{r}
 ggplot(metrics[grepl(metrics$altered_annotations,pattern = "broad|None"),],aes(x = altered_annotations,color=method,y=ASW_label_raw,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
 
+## CiLISI score
 
 ```{r}
-# metricsR$altered_annotations <- factor(metricsR$altered_annotations,levels = sort(unique(metricsR$altered_annotations)))
-
-
 ggplot(metricsR[grepl(metricsR$altered_annotations,pattern = "broad|None"),],aes(x = altered_annotations,color=method,y=CiLISI,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
 
 
-
+# CiLISI vs ASW label scatter plots
 
 ```{r}
 rownames(metricsR) <- gsub(rownames(metricsR),pattern = "/R/",replacement = "/")
@@ -235,16 +219,8 @@ allMetrics <- cbind(metrics,metricsR[rownames(metrics),c("CiLISI","CiLISI_means"
 ```
 
 
+## Label shuflling and partial annotation
 
-```{r fig.height=3,fig.width=6}
-
-for (t in unique(allMetrics$task)) {
-  metricsTask <- allMetrics[allMetrics$task == t,]
-  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "broad|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 4)+theme(legend.position = "bottom"))
-  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "unknown|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 4)+theme(legend.position = "bottom"))
-  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "percentShuffling|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 4)+theme(legend.position = "bottom"))
-}
-```
 ```{r fig.height=0.7,fig.width=2}
 
 for (t in unique(allMetrics$task)) {
@@ -254,6 +230,7 @@ for (t in unique(allMetrics$task)) {
   plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "percentShuffling|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 5)+theme(legend.position = "bottom"))
 }
 ```
+## Broad annotations
 
 ```{r}
 for (t in unique(allMetrics$task)) {
@@ -265,11 +242,7 @@ for (t in unique(allMetrics$task)) {
 ```
 
 
-## Broad vs fine annotation for the T cells atlas
-```{r}
-tcells <- readRDS("../data/tcells_atlas/prepare/unscaled/hvg/adata_pre.RDS")
-table(tcells$celltype,tcells$broad_celltype)
-```
+
 
 
 
