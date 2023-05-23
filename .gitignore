@@ -5,10 +5,19 @@ testing.h5ad
 .vscode/settings.json
 data/*[!{.py}]
 data/*[!{.md}]
+reports/*
+!reports/*.Rmd
+!reports/*.ipynb
+!reports/*.R
+BenchmarkingSupervisedTool/data/*
+BenchmarkingSupervisedTool/reports/*
+!BenchmarkingSupervisedTool/reports/*.Rmd
+BenchmarkingSupervisedTool/cluster/
 .ipynb_checkpoints
 scIB.egg-info
 *cache*
 .snakemake
+cluster/
 
 .Rproj.user
 Benchmarking_data_integration.Rproj
