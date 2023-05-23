@@ -144,8 +144,13 @@ if __name__ == '__main__':
     out = args.output_file
     batch = args.batch
     hvg = int(args.hvgs)
-    celltype = args.celltype
     method = args.method
+    
+    if method in ["scgen",'scanvi']:
+        celltype = args.celltype
+    else:
+        celltype = None
+        
     methods = {
         'scanorama': scanorama,
         'trvae': scib.integration.trvae,
