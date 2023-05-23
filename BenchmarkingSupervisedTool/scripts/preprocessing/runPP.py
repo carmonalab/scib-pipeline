@@ -33,7 +33,7 @@ def makePartialAnno(adata, label):
         adata: adata object
         label: cell type label column
     """
-    for n in [10,20,50]:
+    for n in [10,20,50,100]:
       adata.obs["unknown_"+str(n)+"_"+ label] = adata.obs[label].copy()
       adata.obs["unknown_"+str(n)+"_"+ label] = adata.obs["unknown_"+str(n)+"_"+ label].cat.add_categories(['unknown'])
       adata.obs["unknown_"+str(n)+"_"+ label] = unassignPortion(adata.obs["unknown_"+str(n)+"_"+ label].values, n)
@@ -50,7 +50,7 @@ def makeNoise(adata, label):
         adata: adata object
         label: cell type label column
     """
-    for n in [10,20,50]:
+    for n in [10,20,50,100]:
       adata.obs["percentShuffling_"+str(n)+"_"+ label] = adata.obs[label].copy()
       adata.obs["percentShuffling_"+str(n)+"_"+ label] = shufflePortion(adata.obs["percentShuffling_"+str(n)+"_"+ label].values, n)
     
