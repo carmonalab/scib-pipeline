@@ -1,12 +1,14 @@
 ---
-title: "integrationBenchmarkReport"
+title: "Benchmark of supervised integration tools"
 author: "Leonard Herault"
 date: '2022-12-09'
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE,comment = FALSE,warning = FALSE)
 ```
 
 ## libraries
@@ -58,15 +60,17 @@ library(scIntegrationMetrics)
 library(anndata)
 ```
 
-## Compute true mislabelling rate
+## Compute true mislabelling rates
 ```{r}
 misRateTable <- data.frame()
-celltypeLabel = c("celltype","celltype","final_annotation")
-names(celltypeLabel) <- c('tcells_atlas','human_pancreas','immune_cell_hum')
+celltypeLabel = c("celltype","celltype","final_annotation","cell_type")
+names(celltypeLabel) <- c('tcells_atlas','human_pancreas','immune_cell_hum',"lung_atlas")
 
-for (task in c('tcells_atlas','human_pancreas','immune_cell_hum')) {
+atlases <- c('tcells_atlas','human_pancreas','immune_cell_hum',"lung_atlas")
+
+for (task in atlases) {
   adata <- read_h5ad(paste0("../data/",task,"/prepare/unscaled/hvg/adata_pre.h5ad"))
-  for (p in c(10,20,50)) {
+  for (p in c(10,20,50,100)) {
     misRate <- table(adata$obs[,paste0('percentShuffling_',p,'_',celltypeLabel[task])] == adata$obs[,celltypeLabel[task]])[1]/length(adata$obs[,celltypeLabel[task]])
     misRateTable <- rbind(misRateTable,c(task, p, misRate))
   }
@@ -74,6 +78,7 @@ for (task in c('tcells_atlas','human_pancreas','immune_cell_hum')) {
 colnames(misRateTable) <- c("task","percentShuffling","percentMislabelling")
 misRateTable$percentMislabelling <- as.numeric(misRateTable$percentMislabelling)
 
+misRateTable$percentShuffling <- as.numeric(misRateTable$percentShuffling)
 ggplot(misRateTable, aes(x = percentShuffling , y = percentMislabelling, fill = task)) + geom_bar(stat="identity", color="black", position=position_dodge())
 ```
 
@@ -84,7 +89,7 @@ ggplot(misRateTable, aes(x = percentShuffling , y = percentMislabelling, fill = 
 metricsR <- read.csv("../data/metrics_R.csv",row.names = 1)
 
 scenarios <- str_split_fixed(rownames(metricsR),pattern = "/",n=7)
-head(scenarios)
+#head(scenarios)
 
 scenarios <- scenarios[,-1]
 colnames(scenarios) <- c("task","altered_annotations","folder","scaling","features","method")
@@ -97,7 +102,7 @@ metricsR$tool <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,1]
 metricsR_unaltered <- read.csv("../../data/metrics_R.csv",row.names = 1)
 
 scenarios_unaltered <- str_split_fixed(rownames(metricsR_unaltered),pattern = "/",n=6)
-head(scenarios_unaltered)
+#head(scenarios_unaltered)
 
 scenarios_unaltered <- data.frame(scenarios_unaltered[,-1])
 
@@ -106,7 +111,7 @@ scenarios_unaltered$method <- str_split_fixed(scenarios_unaltered$method,pattern
 
 
 
-keptIndex <- which(scenarios_unaltered$task %in% c("human_pancreas","immune_cell_hum", "tcells_atlas") &
+keptIndex <- which(scenarios_unaltered$task %in% atlases &
                      scenarios_unaltered$scaling %in% c("unscaled") &
                      scenarios_unaltered$method %in% c("scanvi_embed","scvi_embed","semiSupSTACAS_embed","STACAS_embed","scgen_full","unintegrated_full"))
 
@@ -120,10 +125,10 @@ metricsR_unaltered$tool <- str_split_fixed(metricsR_unaltered$method,pattern = "
 
 metricsR_unaltered$altered_annotations = "None"
 
-head(metricsR_unaltered)
+#head(metricsR_unaltered)
 
 metricsR <- rbind(metricsR,metricsR_unaltered[,colnames(metricsR)])
-metricsR
+#metricsR
 ```
 
 
@@ -133,7 +138,7 @@ metricsR
 metrics <- read.csv("../data/metrics.csv",row.names = 1)
 
 scenarios <- str_split_fixed(rownames(metrics),pattern = "/",n=7)
-head(scenarios)
+#head(scenarios)
 
 scenarios <- scenarios[,-1]
 colnames(scenarios) <- c("task","altered_annotations","folder","scaling","features","method")
@@ -146,7 +151,7 @@ metrics$tool <- str_split_fixed(metrics$method,pattern = "_",n=2)[,1]
 metrics_unaltered <- read.csv("../../data/metrics.csv",row.names = 1)
 
 scenarios_unaltered <- str_split_fixed(rownames(metrics_unaltered),pattern = "/",n=6)
-head(scenarios_unaltered)
+#head(scenarios_unaltered)
 
 scenarios_unaltered <- data.frame(scenarios_unaltered[,-1])
 
@@ -155,7 +160,7 @@ colnames(scenarios_unaltered) <- c("task","folder","scaling","features","method"
 
 
 
-keptIndex <- which(scenarios_unaltered$task %in% c("human_pancreas","immune_cell_hum", "tcells_atlas") &
+keptIndex <- which(scenarios_unaltered$task %in% atlases &
                      scenarios_unaltered$scaling %in% c("unscaled") &
                      scenarios_unaltered$method %in% c("scanvi_embed","scvi_embed","semiSupSTACAS_embed","STACAS_embed","scgen_full","unintegrated_full"))
 
@@ -171,10 +176,10 @@ metrics_unaltered$tool <- str_split_fixed(metrics_unaltered$method,pattern = "_"
 
 metrics_unaltered$altered_annotations = "None"
 
-head(metrics_unaltered)
+#head(metrics_unaltered)
 
 metrics <- rbind(metrics,metrics_unaltered[,colnames(metrics)])
-metrics
+#metrics
 
 
 
@@ -182,11 +187,18 @@ metrics
 ```
 
 ```{r}
+metrics$altered_annotations <- factor(metrics$altered_annotations,levels = c("None", "broad",
+                                                                             "percentShuffling_10","percentShuffling_20","percentShuffling_50","percentShuffling_100",
+                                                                             "unknown_10", "unknown_20","unknown_50","unknown_100"))
 metrics$ASW_label_raw <- 2*metrics$ASW_label-1
 ggplot(metrics[grepl(metrics$altered_annotations,pattern = "percentShuffling|None"),],aes(x = altered_annotations,color=method,y=ASW_label_raw,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
 ```{r}
+metricsR$altered_annotations <- factor(metricsR$altered_annotations,levels = c("None", "broad",
+                                                                             "percentShuffling_10","percentShuffling_20","percentShuffling_50","percentShuffling_100",
+                                                                             "unknown_10", "unknown_20","unknown_50","unknown_100"))
+
 ggplot(metricsR[grepl(metricsR$altered_annotations,pattern = "percentShuffling|None"),],aes(x = altered_annotations,color=method,y=CiLISI,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
@@ -200,7 +212,6 @@ ggplot(metricsR[grepl(metricsR$altered_annotations,pattern = "unknown|None"),],a
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
 ```{r}
-metrics$altered_annotations <- factor(metrics$altered_annotations,levels = sort(unique(metrics$altered_annotations))[c(2,1,c(3:length(unique(metrics$altered_annotations))))])
 
 ggplot(metrics[grepl(metrics$altered_annotations,pattern = "broad|None"),],aes(x = altered_annotations,color=method,y=ASW_label_raw,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
   scale_x_discrete(guide = guide_axis(angle = 45))
@@ -208,7 +219,7 @@ ggplot(metrics[grepl(metrics$altered_annotations,pattern = "broad|None"),],aes(x
 
 
 ```{r}
-metricsR$altered_annotations <- factor(metricsR$altered_annotations,levels = sort(unique(metricsR$altered_annotations))[c(2,1,c(3:length(unique(metricsR$altered_annotations))))])
+# metricsR$altered_annotations <- factor(metricsR$altered_annotations,levels = sort(unique(metricsR$altered_annotations)))
 
 
 ggplot(metricsR[grepl(metricsR$altered_annotations,pattern = "broad|None"),],aes(x = altered_annotations,color=method,y=CiLISI,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
@@ -225,17 +236,39 @@ allMetrics <- cbind(metrics,metricsR[rownames(metrics),c("CiLISI","CiLISI_means"
 
 
 
-```{r fig.height=0.75,fig.width=3}
+```{r fig.height=3,fig.width=6}
 
 for (t in unique(allMetrics$task)) {
   metricsTask <- allMetrics[allMetrics$task == t,]
-  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "broad|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 4))
-  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "unknown|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 4))
-  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "percentShuffling|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 4))
+  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "broad|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 4)+theme(legend.position = "bottom"))
+  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "unknown|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 4)+theme(legend.position = "bottom"))
+  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "percentShuffling|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 4)+theme(legend.position = "bottom"))
 }
+```
+```{r fig.height=0.7,fig.width=2}
+
+for (t in unique(allMetrics$task)) {
+  metricsTask <- allMetrics[allMetrics$task == t,]
+  # plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "broad|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 5)+theme(legend.position = "bottom"))
+  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "unknown|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 5)+theme(legend.position = "bottom"))
+  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "percentShuffling|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 5)+theme(legend.position = "bottom"))
+}
+```
+
+```{r}
+for (t in unique(allMetrics$task)) {
+  metricsTask <- allMetrics[allMetrics$task == t,]
+  plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "broad|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 5)+theme(legend.position = "bottom"))
+  # plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "unknown|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 5)+theme(legend.position = "bottom"))
+  # plot(ggplot(metricsTask[grepl(metricsTask$altered_annotations,pattern = "percentShuffling|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","altered_annotations"), ncol = 5)+theme(legend.position = "bottom"))
+}
+```
 
 
-
+## Broad vs fine annotation for the T cells atlas
+```{r}
+tcells <- readRDS("../data/tcells_atlas/prepare/unscaled/hvg/adata_pre.RDS")
+table(tcells$celltype,tcells$broad_celltype)
 ```
 
 

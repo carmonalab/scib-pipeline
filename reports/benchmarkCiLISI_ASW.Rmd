@@ -45,7 +45,8 @@ source("knit_table.R") # Please put knit_table.R in your working dir
 
 source("R_fun_report.R")
 
-
+ids_RNA <- c("human_pancreas", "lung_atlas", "immune_cell_hum","tcells_atlas")
+labels_RNA <- c("Pancreas", "Lung", "Immune", 'T cells')
 ```
 
 ```{r}
@@ -191,24 +192,24 @@ plotBestMethodsRNA(
   # csv_usability_path = "./data/usability4bestMethods.csv",
   csv_scalability_time_path = "./scalability_score_time_revision.csv",
   csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
-  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  ids_RNA = ids_RNA,
   #ids_simulation = c("simulations_1_1", "simulations_2"),  
-  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  labels_RNA = labels_RNA,
   #labels_simulation = c("Sim 1", "Sim 2"), 
   weight_batch = 0.4,
   keepBest = F, keepBestOutput = F
 )
 
 
-plotBestMethodsRNA(
+BestMethodsCiLISIASW0 <- plotBestMethodsRNA(
   csv_metrics_path = "CiLISIlabelASW/metrics.csv",
   outdir = "CiLISIlabelASW/best",
   # csv_usability_path = "./data/usability4bestMethods.csv",
   csv_scalability_time_path = "./scalability_score_time_revision.csv",
   csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
-  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  ids_RNA = ids_RNA,
   #ids_simulation = c("simulations_1_1", "simulations_2"),  
-  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  labels_RNA = labels_RNA,
   #labels_simulation = c("Sim 1", "Sim 2"), 
   weight_batch = 0.4,
   keepBest = T, keepBestOutput = T
@@ -241,9 +242,9 @@ plotBestMethodsRNA(
   # csv_usability_path = "./data/usability4bestMethods.csv",
   csv_scalability_time_path = "./scalability_score_time_revision.csv",
   csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
-  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  ids_RNA = ids_RNA,
   #ids_simulation = c("simulations_1_1", "simulations_2"),  
-  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  labels_RNA = labels_RNA,
   #labels_simulation = c("Sim 1", "Sim 2"), 
   weight_batch = 0.4,
   keepBest = F, keepBestOutput = F
@@ -256,9 +257,9 @@ plotBestMethodsRNA(
   # csv_usability_path = "./data/usability4bestMethods.csv",
   csv_scalability_time_path = "./scalability_score_time_revision.csv",
   csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
-  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  ids_RNA = ids_RNA,
   #ids_simulation = c("simulations_1_1", "simulations_2"),  
-  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  labels_RNA = labels_RNA,
   #labels_simulation = c("Sim 1", "Sim 2"), 
   weight_batch = 0.4,
   keepBest = T, keepBestOutput = T
@@ -293,9 +294,9 @@ plotBestMethodsRNA(
   # csv_usability_path = "./data/usability4bestMethods.csv",
   csv_scalability_time_path = "./scalability_score_time_revision.csv",
   csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
-  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  ids_RNA = ids_RNA,
   #ids_simulation = c("simulations_1_1", "simulations_2"),  
-  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  labels_RNA = labels_RNA,
   #labels_simulation = c("Sim 1", "Sim 2"), 
   weight_batch = 0.4,
   keepBest = F, keepBestOutput = F
@@ -308,9 +309,9 @@ plotBestMethodsRNA(
   # csv_usability_path = "./data/usability4bestMethods.csv",
   csv_scalability_time_path = "./scalability_score_time_revision.csv",
   csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
-  ids_RNA = c("human_pancreas", "lung_atlas", "immune_cell_hum","immune_cell_hum_mou","tcells_atlas"),
+  ids_RNA = ids_RNA,
   #ids_simulation = c("simulations_1_1", "simulations_2"),  
-  labels_RNA = c("Pancreas", "Lung", "Immune (hum)",'Immune (hum, mou)', 'T cells'),
+  labels_RNA = labels_RNA,
   #labels_simulation = c("Sim 1", "Sim 2"), 
   weight_batch = 0.4,
   keepBest = T, keepBestOutput = T
@@ -321,3 +322,57 @@ plotBestMethodsRNA(
 plotSingleTaskRNA("oriMetrics/metrics.csv",outdir = "oriMetrics/singleTask")
 
 ```
+
+
+#TODO 
+```{r}
+BestMethodsCiLISIASW <- BestMethodsCiLISIASW0
+
+BestMethodsCiLISIASW$Method <- plyr::mapvalues(BestMethodsCiLISIASW$Method,
+                               to = c("seurat", "seuratrpca", "bbknn", "scvi", "liger", "combat", "fastmnn", "scanvi", "scgen","STACAS","semiSupSTACAS","scanorama","unintegrated","harmony","combat"), 
+                               from = c("Seurat v3 CCA", "Seurat v3 RPCA", "BBKNN", "scVI", "LIGER", "ComBat", "fastMNN", "scANVI*", "scGen*","STACAS","ssSTACAS*","Scanorama","Unintegrated","Harmony","ComBat"))
+
+BestMethodsCiLISIASW$methodLong <- paste0(BestMethodsCiLISIASW$Method,"_",BestMethodsCiLISIASW$Output,"_",BestMethodsCiLISIASW$Scaling)
+
+BestMethodsCiLISIASW <- metrics[metrics$methodLong %in% BestMethodsCiLISIASW$methodLong,]
+
+BestMethodsCiLISIASW$matchScalability <-  paste0(BestMethodsCiLISIASW$task,"_",
+                                                 BestMethodsCiLISIASW$tool,"_",
+                                                 BestMethodsCiLISIASW$features,"_",
+                                                 BestMethodsCiLISIASW$scaling)
+
+
+rownames(BestMethodsCiLISIASW) <- BestMethodsCiLISIASW$matchScalability
+scalability <- read.csv("./benchmark_meta.csv")
+rownames(scalability) <- paste(scalability$scenario1,
+                               scalability$method,
+                                 scalability$features,
+                                 scalability$scale,sep = "_")
+
+bestMethodScalability <- BestMethodsCiLISIASW[BestMethodsCiLISIASW$tool != "Unintegrated",c("tool","methodLong")]
+bestMethodScalability <- cbind(bestMethodScalability,scalability[rownames(bestMethodScalability),])
+
+## retriev color
+bestMethodScalability$methodLong <- factor(bestMethodScalability$methodLong,levels = sort(BestMethodsCiLISIASW0$methodLong))
+
+bestMethodScalability <- bestMethodScalability[order(bestMethodScalability$methodLong),]
+bestMethodScalability$tool <- factor(bestMethodScalability$tool,levels = unique(bestMethodScalability$tool))
+
+matchColor <- scales::hue_pal()(12)
+names(matchColor) <- levels(bestMethodScalability$tool)
+
+## order
+bestMethodScalability$methodLong <- factor(bestMethodScalability$methodLong,levels = rev(BestMethodsCiLISIASW0$methodLong))
+
+bestMethodScalability <- bestMethodScalability[order(bestMethodScalability$methodLong),]
+bestMethodScalability$tool <- factor(bestMethodScalability$tool,levels = unique(bestMethodScalability$tool))
+
+
+
+p1 <- ggplot(data = bestMethodScalability,aes(x=tool,y = cpu_time/60, fill = tool)) +geom_boxplot() + coord_flip() + NoLegend() + scale_fill_manual(values = matchColor) + ylab('cpu time (min)')
+
+p2 <- ggplot(data = bestMethodScalability,aes(x=tool,y = max_pss/10^3, fill = tool)) +geom_boxplot() + coord_flip() + NoLegend() + scale_fill_manual(values = matchColor) + ylab('memory (GB)')
+
+p1+p2
+```
+
