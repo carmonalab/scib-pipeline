@@ -48,7 +48,6 @@ runSeuratRPCA = function(data, batch, hvg=2000, dims = c(1:30)) {
   require(Seurat)
   batch_list = SplitObject(data, split.by = batch)
   remove(data)
-  #features <- SelectIntegrationFeatures(batch_list)
   batch_list <- lapply(X = batch_list, FUN = function(x) {
     x  <- ScaleData(x, features = hvg)
     x <- RunPCA(x, features = hvg,npcs = 30)
@@ -99,8 +98,6 @@ runSTACAS = function(data, batch, hvg=2000) {
 
 runSemiSupSTACAS = function(data, batch, hvg=2000,celltype) {
   require(STACAS)
-  #data[[celltype]][data[[celltype]]=="Unknown"] <- "unknown"
-  #droplevels(data[[celltype]][,1])
   batch_list = SplitObject(data, split.by = batch)
   remove(data)
   integrated = Run.STACAS(object.list = batch_list, anchor.features = hvg, dims = 1:30, cell.labels = celltype) 
@@ -114,23 +111,6 @@ runOwnFeaturesSemiSupSTACAS = function(data, batch, hvg=2000,celltype) {
   remove(data)
   integrated = Run.STACAS(object.list = batch_list, anchor.features = 2000, dims = 1:30, cell.labels = celltype) 
   integrated[['X_emb']] <- integrated[['pca']]
-  # anchors = FindAnchors.STACAS(
-  #   object.list = batch_list,
-  #   anchor.features = 2000,
-  #   cell.labels = celltype,
-  #   dims = 1:30,
-  #   k.anchor = 5,
-  #   k.score = 30,verbose = T)
-  # 
-  # integrated = IntegrateData.STACAS(
-  #   anchorset = anchors,
-  #   new.assay.name = "integrated",
-  #   features.to.integrate = NULL,
-  #   dims = 1:30,
-  #   k.weight = 100,
-  #   sample.tree = NULL,
-  #   semisupervised = TRUE,
-  #   verbose = T)
   return(integrated)
 }
 
@@ -140,22 +120,6 @@ runOwnFeaturesSTACAS = function(data, batch, hvg=2000) {
   remove(data)
   integrated = Run.STACAS(object.list = batch_list, anchor.features = 2000, dims = 1:30, cell.labels = NULL) 
   integrated[['X_emb']] <- integrated[['pca']]
-  # anchors = FindAnchors.STACAS(
-  #   object.list = batch_list,
-  #   anchor.features = 2000,
-  #   dims = 1:30,
-  #   k.anchor = 5,
-  #   k.score = 30)
-  # 
-  # integrated = IntegrateData.STACAS(
-  #   anchorset = anchors,
-  #   new.assay.name = "integrated",
-  #   features.to.integrate = NULL,
-  #   dims = 1:30,
-  #   k.weight = 100,
-  #   sample.tree = NULL,
-  #   semisupervised = FALSE,
-  #   verbose = T)
   return(integrated)
 }
 
