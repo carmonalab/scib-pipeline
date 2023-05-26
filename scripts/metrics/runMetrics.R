@@ -51,6 +51,7 @@ batchPerLabel <- apply(table(sobj@meta.data[,opt$l],sobj@meta.data[,opt$b]),MARG
 
 metricsLabels <- names(batchPerLabel[batchPerLabel>1])
 
+# use all dimensions (computed with a fixed number in the pipeline with metrics.py for full outputs or during integration for embed outputs) by default 
 results <- getIntegrationMetrics(object=sobj,
                                  metrics = c( 'CiLISI', 'CiLISI_means'), 
                                  meta.label = opt$l, 
@@ -63,5 +64,3 @@ metricTable <- t(data.frame(results))
 colnames(metricTable) <- paste0(opt$m,"_",opt$t)
 
 write.csv(metricTable,opt$o)
-
-fun = function(x) {print(x)}

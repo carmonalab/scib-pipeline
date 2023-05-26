@@ -15,16 +15,18 @@ rule embeddings_single:
         Method: {wildcards.method} {wildcards.o_type}
         Input: {input.adata}
         Output: {output}
+        Dimensions: {params.dims}  
         """
     params:
         batch_key = lambda wildcards: cfg.get_from_scenario(wildcards.scenario, key="batch_key"),
         label_key = lambda wildcards: cfg.get_from_scenario(wildcards.scenario, key="label_key"),
-        cmd       = f"conda run -n {cfg.py_env} python"
+        cmd       = f"conda run -n {cfg.py_env} python",
+        dims = cfg.dims
     shell:
         """
         {params.cmd} scripts/visualization/save_embeddings.py \
             --input {input.adata} --outfile {output.coords} \
-            --method {wildcards.method} --batch_key {params.batch_key} \
+            --method {wildcards.method} --batch_key {params.batch_key} -n {params.dims} \
             --label_key {params.label_key} --result {wildcards.o_type}
         """
 

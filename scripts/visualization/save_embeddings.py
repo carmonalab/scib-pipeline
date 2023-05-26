@@ -24,14 +24,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Save embeddings')
 
     parser.add_argument('-i', '--input', required=True)
-    parser.add_argument('-o', '--outfile', required=True,
-                        help='Output coordinates CSV file')
+    parser.add_argument('-o', '--outfile', required=True, help='Output coordinates CSV file')
     parser.add_argument('-m', '--method', required=True, help='Name of method')
-    parser.add_argument('-r', '--result', required=True, choices=RESULT_TYPES,
-                        help='Type of result: full, embed, knn')
+    parser.add_argument('-r', '--result', required=True, choices=RESULT_TYPES, help='Type of result: full, embed, knn')
     parser.add_argument('-b', '--batch_key', required=True, help='Key of batch')
-    parser.add_argument('-l', '--label_key', required=True,
-                        help='Key of annotated labels e.g. "cell_type"')
+    parser.add_argument('-n', '--pca_dims', default=30, help='Number of dimensions for the initial PCA before UMAP computation (only for full output)')
+    parser.add_argument('-l', '--label_key', required=True, help='Key of annotated labels e.g. "cell_type"')
 
     args = parser.parse_args()
 
@@ -40,6 +38,7 @@ if __name__ == '__main__':
     result = args.result
     setup = f'{method}_{result}'
     batch_key = args.batch_key
+    dims = int(args.pca_dims)
     label_key = args.label_key
 
     outdir = os.path.dirname(outfile)
@@ -67,6 +66,7 @@ if __name__ == '__main__':
             neighbors=True,
             use_rep='X_emb',
             pca=False,
+            #pca_comps=dims, not used as pca is False, neighbor will be computed using all dims of X_emb
             umap=False
         )
     elif result == 'full':
@@ -77,6 +77,7 @@ if __name__ == '__main__':
             neighbors=True,
             use_rep='X_pca',
             pca=True,
+            pca_comps=dims,
             umap=False
         )
 

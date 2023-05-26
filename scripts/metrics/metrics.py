@@ -32,6 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--method', required=True, help='Name of method')
 
     parser.add_argument('-b', '--batch_key', required=True, help='Key of batch')
+    parser.add_argument('-n', '--latent_dims', default=30, help='Number of dimensions of the latent integrated space')
     parser.add_argument('-l', '--label_key', required=True, help='Key of annotated labels e.g. "cell_type"')
 
     parser.add_argument('--organism', required=True)
@@ -48,6 +49,7 @@ if __name__ == '__main__':
     verbose = args.verbose
     type_ = args.type
     batch_key = args.batch_key
+    dims = int(args.latent_dims)
     label_key = args.label_key
     assay = args.assay
     organism = args.organism
@@ -160,7 +162,7 @@ if __name__ == '__main__':
     if not empty_file:
         scib.preprocessing.reduce_data(
             adata_int,
-            pca_comps=30,
+            pca_comps=dims, # used only if pca is True
             n_top_genes=n_hvgs,
             neighbors=recompute_neighbors,
             use_rep=embed,

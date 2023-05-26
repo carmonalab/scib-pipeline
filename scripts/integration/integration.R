@@ -9,7 +9,7 @@ saveSeuratObject = function(sobj, path) {
   saveRDS(sobj, file=path)
 }
 
-runSeurat = function(data, batch, hvg=2000, dims = c(1:30)) {
+runSeurat = function(data, batch, dims, hvg=2000) {
   require(Seurat)
   batch_list = SplitObject(data, split.by = batch)
   remove(data)
@@ -18,7 +18,7 @@ runSeurat = function(data, batch, hvg=2000, dims = c(1:30)) {
     anchor.features = hvg,
     scale = T,
     l2.norm = T,
-    dims = dims,
+    dims = c(1:dims),
     k.anchor = 5,
     k.filter = 200,
     k.score = 30,
@@ -29,7 +29,7 @@ runSeurat = function(data, batch, hvg=2000, dims = c(1:30)) {
     new.assay.name = "integrated",
     features = NULL,
     features.to.integrate = NULL,
-    dims = dims,
+    dims = c(1:dims),
     k.weight = 100,
     weight.reduction = NULL,
     sd.weight = 1,
@@ -39,19 +39,19 @@ runSeurat = function(data, batch, hvg=2000, dims = c(1:30)) {
     eps = 0,
     verbose = T)
   integrated <- ScaleData(integrated)
-  integrated <- RunPCA(integrated, npcs = max(dims))
+  integrated <- RunPCA(integrated, npcs = dims)
   integrated[['X_emb']] <- integrated[['pca']]
   return(integrated)
 }
 
-runSeuratRPCA = function(data, batch, hvg=2000, dims = c(1:30)) {
+runSeuratRPCA = function(data, batch, dims, hvg=2000) {
   require(Seurat)
   batch_list = SplitObject(data, split.by = batch)
   remove(data)
   #features <- SelectIntegrationFeatures(batch_list)
   batch_list <- lapply(X = batch_list, FUN = function(x) {
     x  <- ScaleData(x, features = hvg)
-    x <- RunPCA(x, features = hvg,npcs = 30)
+    x <- RunPCA(x, features = hvg,npcs = dims)
     return(x)
   })
   
@@ -60,7 +60,7 @@ runSeuratRPCA = function(data, batch, hvg=2000, dims = c(1:30)) {
     anchor.features = hvg,
     scale = T,
     l2.norm = T,
-    dims = dims,
+    dims = c(1:dims),
     k.anchor = 5,
     k.filter = 200,
     k.score = 30,
@@ -72,7 +72,7 @@ runSeuratRPCA = function(data, batch, hvg=2000, dims = c(1:30)) {
     new.assay.name = "integrated",
     features = NULL,
     features.to.integrate = NULL,
-    dims = dims,
+    dims = c(1:dims),
     k.weight = 100,
     weight.reduction = NULL,
     sd.weight = 1,
@@ -82,78 +82,45 @@ runSeuratRPCA = function(data, batch, hvg=2000, dims = c(1:30)) {
     eps = 0,
     verbose = T)
   integrated <- ScaleData(integrated)
-  integrated <- RunPCA(integrated, npcs = max(dims))
+  integrated <- RunPCA(integrated, npcs = dims)
   integrated[['X_emb']] <- integrated[['pca']]
   
   return(integrated)
 }
 
-runSTACAS = function(data, batch, hvg=2000) {
+runSTACAS = function(data, batch, dims, hvg=2000) {
   require(STACAS)
   batch_list = SplitObject(data, split.by = batch)
   remove(data)
-  integrated = Run.STACAS(object.list = batch_list, anchor.features = hvg, dims = 1:30, cell.labels = NULL) 
+  integrated = Run.STACAS(object.list = batch_list, anchor.features = hvg, dims = 1:dims, cell.labels = NULL) 
   integrated[['X_emb']] <- integrated[['pca']]
   return(integrated)
 }
 
-runSemiSupSTACAS = function(data, batch, hvg=2000,celltype) {
+runSemiSupSTACAS = function(data, batch, dims, hvg=2000,celltype) {
   require(STACAS)
   batch_list = SplitObject(data, split.by = batch)
   remove(data)
-  integrated = Run.STACAS(object.list = batch_list, anchor.features = hvg, dims = 1:30, cell.labels = celltype) 
+  integrated = Run.STACAS(object.list = batch_list, anchor.features = hvg, dims = 1:dims, cell.labels = celltype) 
   integrated[['X_emb']] <- integrated[['pca']]
   return(integrated)
 }
 
-runOwnFeaturesSemiSupSTACAS = function(data, batch, hvg=2000,celltype) {
+runOwnFeaturesSemiSupSTACAS = function(data, batch, dims, hvg=2000,celltype) {
   require(STACAS)
   batch_list = SplitObject(data, split.by = batch)
   remove(data)
-  integrated = Run.STACAS(object.list = batch_list, anchor.features = 2000, dims = 1:30, cell.labels = celltype) 
+  integrated = Run.STACAS(object.list = batch_list, anchor.features = 2000, dims = 1:dims, cell.labels = celltype) 
   integrated[['X_emb']] <- integrated[['pca']]
-  # anchors = FindAnchors.STACAS(
-  #   object.list = batch_list,
-  #   anchor.features = 2000,
-  #   cell.labels = celltype,
-  #   dims = 1:30,
-  #   k.anchor = 5,
-  #   k.score = 30,verbose = T)
-  # 
-  # integrated = IntegrateData.STACAS(
-  #   anchorset = anchors,
-  #   new.assay.name = "integrated",
-  #   features.to.integrate = NULL,
-  #   dims = 1:30,
-  #   k.weight = 100,
-  #   sample.tree = NULL,
-  #   semisupervised = TRUE,
-  #   verbose = T)
   return(integrated)
 }
 
-runOwnFeaturesSTACAS = function(data, batch, hvg=2000) {
+runOwnFeaturesSTACAS = function(data, batch, dims, hvg=2000) {
   require(STACAS)
   batch_list = SplitObject(data, split.by = batch)
   remove(data)
-  integrated = Run.STACAS(object.list = batch_list, anchor.features = 2000, dims = 1:30, cell.labels = NULL) 
+  integrated = Run.STACAS(object.list = batch_list, anchor.features = 2000, dims = 1:dims, cell.labels = NULL) 
   integrated[['X_emb']] <- integrated[['pca']]
-  # anchors = FindAnchors.STACAS(
-  #   object.list = batch_list,
-  #   anchor.features = 2000,
-  #   dims = 1:30,
-  #   k.anchor = 5,
-  #   k.score = 30)
-  # 
-  # integrated = IntegrateData.STACAS(
-  #   anchorset = anchors,
-  #   new.assay.name = "integrated",
-  #   features.to.integrate = NULL,
-  #   dims = 1:30,
-  #   k.weight = 100,
-  #   sample.tree = NULL,
-  #   semisupervised = FALSE,
-  #   verbose = T)
   return(integrated)
 }
 
@@ -174,30 +141,30 @@ func_profiler = function(expr, chunksize=20000, filename='timing.out', prof.inte
 #   out$time is timing
 #   out$memory is memory use
 
-preP <- function(so, vars.to.regress=NULL, verbose=TRUE, n.pcs=30) {
-  if (verbose) {
-    message("Running Seurat v3 workflow")
-  }
-  so <- Seurat::FindVariableFeatures(object = so, verbose = verbose)
-  so <- Seurat::ScaleData(object = so, verbose = verbose)
-  so <- Seurat::RunPCA(object = so, npcs = n.pcs, verbose = verbose)
-  return(so)
-}
-
-runConos = function(sobj, batch) {
-  require(conos)
-  require(Seurat)
-  
-  batch_list <- SplitObject(sobj, split.by=batch)
-  pp <- lapply(batch_list, preP)
-  
-  con <- Conos$new(pp)
-  con$buildGraph(space="genes")
-  con$findCommunities()
-  con$embedGraph(method="UMAP")
-  
-  return(con)
-}
+# preP <- function(so, vars.to.regress=NULL, verbose=TRUE, n.pcs=30) {
+#   if (verbose) {
+#     message("Running Seurat v3 workflow")
+#   }
+#   so <- Seurat::FindVariableFeatures(object = so, verbose = verbose)
+#   so <- Seurat::ScaleData(object = so, verbose = verbose)
+#   so <- Seurat::RunPCA(object = so, npcs = n.pcs, verbose = verbose)
+#   return(so)
+# }
+# 
+# runConos = function(sobj, batch, dims) {
+#   require(conos)
+#   require(Seurat)
+# 
+#   batch_list <- SplitObject(sobj, split.by=batch)
+#   pp <- lapply(batch_list, preP,n.pcs = dims)
+# 
+#   con <- Conos$new(pp)
+#   con$buildGraph(space="genes")
+#   con$findCommunities()
+#   con$embedGraph(method="UMAP")
+# 
+#   return(con)
+# }
 
 saveConos = function(con, outdir) {
   dir.create(outdir)
@@ -207,69 +174,69 @@ saveConos = function(con, outdir) {
                      verbose=TRUE)
 }
 
-runHarm = function(sobj, batch) {
+runHarm = function(sobj, batch, dims) {
   require(harmony)
   require(Seurat)
   sobj <- ScaleData(sobj)
-  sobj <- RunPCA(sobj,features = rownames(sobj),npcs = 30)
-  sobj <- RunHarmony(sobj, batch,assay.use = DefaultAssay(sobj),dims.use = c(1:30))
+  sobj <- RunPCA(sobj,features = rownames(sobj),npcs = dims)
+  sobj <- RunHarmony(sobj, batch,assay.use = DefaultAssay(sobj),dims.use = c(1:dims))
   sobj[['X_emb']] <- sobj[['harmony']]
   
   return(sobj)
 }
 
-runLiger = function(sobj, batch, hvg, k = 20, res = 0.4, small.clust.thresh = 20) {
-  tryCatch(
-    require(liger),
-    warning = function (w) require(rliger)
-  )
-  require(Seurat)
-  
-  # Only counts is converted to liger object. To pass our own normalized data,
-  # store it in the "counts" slot
-  if (is.null(sobj@assays$RNA)) {
-    # Seurat v4
-    data <- GetAssayData(sobj, slot = "data")
-    SetAssayData(sobj, slot = "counts", new.data = as.matrix(data))
-  } else {
-    # Seurat v3
-    sobj@assays$RNA@counts = sobj@assays$RNA@data
-  }
-  
-  # Create Liger object
-  lobj = seuratToLiger(
-    sobj,
-    combined.seurat = T,
-    meta.var = batch,
-    renormalize = F,
-    remove.missing = F
-  )
-  
-  # We only pass nomarlized data, so store it as such
-  lobj@norm.data <- lobj@raw.data
-  
-  # Assign hvgs
-  lobj@var.genes <- hvg
-  
-  lobj <- scaleNotCenter(lobj, remove.missing = F) # Can't do our own scaling atm
-  
-  # Use tutorial coarse k suggests of 20.
-  lobj <- optimizeALS(lobj, k = k, thresh = 5e-5, nrep = 3)
-  
-  lobj <- quantileAlignSNF(lobj, resolution = res, small.clust.thresh = small.clust.thresh)
-  
-  # Store embedding in initial Seurat object
-  # Code taken from ligerToSeurat() function from LIGER
-  inmf.obj <- new(
-    Class = "DimReduc", feature.loadings = t(lobj@W),
-    cell.embeddings = lobj@H.norm, key = "X_emb"
-  )
-  sobj@reductions['X_emb'] <- inmf.obj
-  
-  return(sobj)
-}
+# runLiger = function(sobj, batch, hvg, k = 20, res = 0.4, small.clust.thresh = 20) {
+#   tryCatch(
+#     require(liger),
+#     warning = function (w) require(rliger)
+#   )
+#   require(Seurat)
+#   
+#   # Only counts is converted to liger object. To pass our own normalized data,
+#   # store it in the "counts" slot
+#   if (is.null(sobj@assays$RNA)) {
+#     # Seurat v4
+#     data <- GetAssayData(sobj, slot = "data")
+#     SetAssayData(sobj, slot = "counts", new.data = as.matrix(data))
+#   } else {
+#     # Seurat v3
+#     sobj@assays$RNA@counts = sobj@assays$RNA@data
+#   }
+#   
+#   # Create Liger object
+#   lobj = seuratToLiger(
+#     sobj,
+#     combined.seurat = T,
+#     meta.var = batch,
+#     renormalize = F,
+#     remove.missing = F
+#   )
+#   
+#   # We only pass nomarlized data, so store it as such
+#   lobj@norm.data <- lobj@raw.data
+#   
+#   # Assign hvgs
+#   lobj@var.genes <- hvg
+#   
+#   lobj <- scaleNotCenter(lobj, remove.missing = F) # Can't do our own scaling atm
+#   
+#   # Use tutorial coarse k suggests of 20.
+#   lobj <- optimizeALS(lobj, k = k, thresh = 5e-5, nrep = 3)
+#   
+#   lobj <- quantileAlignSNF(lobj, resolution = res, small.clust.thresh = small.clust.thresh)
+#   
+#   # Store embedding in initial Seurat object
+#   # Code taken from ligerToSeurat() function from LIGER
+#   inmf.obj <- new(
+#     Class = "DimReduc", feature.loadings = t(lobj@W),
+#     cell.embeddings = lobj@H.norm, key = "X_emb"
+#   )
+#   sobj@reductions['X_emb'] <- inmf.obj
+#   
+#   return(sobj)
+# }
 
-runFastMNN = function(sobj, batch) {
+runFastMNN = function(sobj, batch, dims) {
   suppressPackageStartupMessages({
     require(batchelor)
   })
@@ -282,7 +249,7 @@ runFastMNN = function(sobj, batch) {
     expr <- sobj@assays$RNA@data
   }
   
-  sce <- fastMNN(expr, batch = sobj@meta.data[[batch]],d=30)
+  sce <- fastMNN(expr, batch = sobj@meta.data[[batch]],d=dims)
   corrected_data <- assay(sce, "reconstructed")
   
   if (is.null(sobj@assays$RNA)) {

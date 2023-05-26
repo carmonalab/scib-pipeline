@@ -18,12 +18,15 @@ option_list <- list(make_option(c("-m", "--method"), type="character", default=N
 		    make_option(c("-i", "--input"), type="character", default=NA, help="input data"),
 		    make_option(c("-o", "--output"), type="character", default=NA, help="output file"),
 		    make_option(c("-b", "--batch"), type="character", default=NA, help="batch variable"),
+		    make_option(c("-n", "--ndims"), type="integer", default=30, help="number of dimensions to use for integration"),
 		    make_option(c("-c", "--celltype"), type="character", default=NA, help="cell type variable"),
 		    make_option(c("-v", "--hvg"), type="character", default=NA, help="hvg list for seurat"))
 
 
 
 opt = parse_args(OptionParser(option_list=option_list))
+
+print(opt)
 
 source('integration.R')
 sobj = loadSeuratObject(opt$i)
@@ -36,7 +39,7 @@ if(opt$method=='seurat'){
 		hvg <- rownames(sobj@assays$RNA)
 	}
 
-	out = runSeurat(sobj, opt$b, hvg)
+	out = runSeurat(sobj, opt$b, opt$n, hvg)
 }
 
 if(opt$method=='STACAS'){
@@ -47,7 +50,7 @@ if(opt$method=='STACAS'){
     hvg <- rownames(sobj@assays$RNA)
   }
   
-  out = runSTACAS(sobj, opt$b, hvg)
+  out = runSTACAS(sobj, opt$b, opt$n, hvg)
 }
 
 if(opt$method=='ownFeatSTACAS'){
@@ -58,7 +61,7 @@ if(opt$method=='ownFeatSTACAS'){
     hvg <- rownames(sobj@assays$RNA)
   }
   
-  out = runOwnFeaturesSTACAS(sobj, opt$b, hvg)
+  out = runOwnFeaturesSTACAS(sobj, opt$b, opt$n, hvg)
 }
 
 if(opt$method=='semiSupSTACAS'){
@@ -69,7 +72,7 @@ if(opt$method=='semiSupSTACAS'){
     hvg <- rownames(sobj@assays$RNA)
   }
   
-  out = runSemiSupSTACAS(sobj, opt$b, hvg,opt$c)
+  out = runSemiSupSTACAS(sobj, opt$b, opt$n, hvg,opt$c)
 }
 
 if(opt$method=='ownFeatSemiSupSTACAS'){
@@ -80,7 +83,7 @@ if(opt$method=='ownFeatSemiSupSTACAS'){
     hvg <- rownames(sobj@assays$RNA)
   }
   
-  out = runOwnFeaturesSemiSupSTACAS(sobj, opt$b, hvg,opt$c)
+  out = runOwnFeaturesSemiSupSTACAS(sobj, opt$b, opt$n, hvg,opt$c)
 }
 
 if(opt$method=='seuratrpca'){
@@ -90,8 +93,7 @@ if(opt$method=='seuratrpca'){
 	else {
 		hvg <- rownames(sobj@assays$RNA)
 	}
-
-	out = runSeuratRPCA(sobj, opt$b, hvg)
+	out = runSeuratRPCA(sobj, opt$b, opt$n, hvg)
 }
 
 
@@ -100,7 +102,7 @@ if(opt$method=='conos'){
 		hvg<-unlist(readRDS(opt$hvg), use.names=FALSE)
 		sobj <- subset(sobj, features=hvg)
 	}
-	out = runConos(sobj, opt$b)
+	out = runConos(sobj, opt$b, opt$n)
 }
 
 if(opt$method=='harmony'){
@@ -109,7 +111,7 @@ if(opt$method=='harmony'){
 		sobj <- subset(sobj, features=hvg)
 	}
 
-	out=runHarm(sobj, opt$b)
+	out=runHarm(sobj, opt$b, opt$n)
 }
 
 if(opt$method=='liger'){
@@ -120,7 +122,7 @@ if(opt$method=='liger'){
 		hvg <- rownames(sobj@assays$RNA)
 	}
 
-	out = runLiger(sobj, opt$b, hvg)
+	out = runLiger(sobj, opt$b, opt$n, hvg)
 }
 
 if(opt$method=='fastmnn'){
@@ -129,7 +131,7 @@ if(opt$method=='fastmnn'){
 		sobj <- subset(sobj, features=hvg)
 	}
 
-	out=runFastMNN(sobj, opt$b)
+	out=runFastMNN(sobj, opt$b, opt$n)
 }
 
 saveSeuratObject(out, opt$o)
