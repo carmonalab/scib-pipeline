@@ -1,8 +1,10 @@
-ROOT: data
+ROOT: final_analysis
 r_env : scib-R4.1
 py_env : scib-pipeline-R4.1
-
+dims: 30
 unintegrated_metrics: true
+
+  
 
 FEATURE_SELECTION:
   hvg: 2000
@@ -14,18 +16,8 @@ SCALING:
 
 METHODS:
 # python methods
-  # bbknn:
-  #   output_type: knn
   combat:
     output_type: full
-  #desc:
-  #  output_type: embed
-#  mnn:
-#    output_type: full
-  #saucie:
-  #  output_type:
-  #    - full
-  #    - embed
   scanorama:
     output_type:
       - embed
@@ -40,20 +32,6 @@ METHODS:
   scvi:
     no_scale: true
     output_type: embed
-  #trvae:
-  #  no_scale: true
-  # output_type:
-  #    - embed
-  #    - full
-  # trvaep:
-  #   no_scale: true
-  #   output_type:
-  #     - embed
-  #     - full
-# R methods
-  #conos: # temporary directory issue
-  #  R: true
-  #  output_type: knn
   fastmnn:
     R: true
     output_type:
@@ -62,10 +40,6 @@ METHODS:
   harmony:
     R: true
     output_type: embed
-  # liger:
-  #   no_scale: true
-  #   R: true
-  #   output_type: embed
   seurat:
     R: true
     output_type:
@@ -100,28 +74,25 @@ METHODS:
       - full
 
 DATA_SCENARIOS:
-  # test_data_r4:
-  #   batch_key: batch
-  #   label_key: celltype
-  #   organism: mouse
-  #   assay: expression
-  #   file: data/adata_norm.h5ad
-    
+
   human_pancreas:
     batch_key: tech
     label_key: celltype
     organism: human
     assay: expression
-    file: data/human_pancreas_norm_complexBatch.h5ad
+    file: input/human_pancreas.h5ad
+    #file: data/human_pancreas_norm_complexBatch.h5ad
     url: https://figshare.com/ndownloader/files/24539828
-    
+
   tcells_atlas:
     batch_key: Study
     label_key: celltype
     organism: mouse
     assay: expression
-    file: data/tcells_with_broad_celltypes2.h5ad
-    rds_url: "https://www.dropbox.com/s/6l0szn1hoystqbk/TIL_datasets_Seurat.rds?dl=0"
+    file: input/tcells_atlas.h5ad
+    #file: data/tcells_with_fine_and_broad_annotations.h5ad
+    url: "https://drive.switch.ch/index.php/s/QzmSXI38KiVf1Yv/download"
+    #rds_url: "https://www.dropbox.com/s/6l0szn1hoystqbk/TIL_datasets_Seurat.rds?dl=0"
     #rds_url: https://www.dropbox.com/s/emxmnwegfniirks/ref_TILAtlas_mouse_wcounts_list_merge_BroadCellType.rds?dl=0
 
   lung_atlas:
@@ -129,35 +100,18 @@ DATA_SCENARIOS:
     label_key: cell_type
     organism: human
     assay: expression
-    file: data/Lung_atlas_public.h5ad
+    file: input/lung_atlas.h5ad
+    #file: data/Lung_atlas_public.h5ad
     url: https://figshare.com/ndownloader/files/24539942
-  
+
   immune_cell_hum:
     batch_key: batch
     label_key: final_annotation
     organism: human
     assay: expression
-    file: data/Immune_ALL_human.h5ad
-    url: https://figshare.com/ndownloader/files/25717166
+    file: input/immune_cell_hum.h5ad
+    #file: data/Immune_ALL_human_with_fine_and_broad_annotations.h5ad
+    url: "https://drive.switch.ch/index.php/s/6mnRIheN1rmvYRo/download"
+    #url: https://figshare.com/ndownloader/files/25717166 original without broad annotations
 
-  # immune_cell_hum_mou:
-  #   batch_key: batch
-  #   label_key: final_annotation
-  #   organism: human
-  #   assay: expression
-  #   file: data/Immune_ALL_hum_mou.h5ad
-  #   url: https://figshare.com/ndownloader/files/25717328
      
-  # simulations_1_1:
-  #   batch_key: Batch
-  #   label_key: Group
-  #   organism: human
-  #   assay: simulation
-  #   file: data/sim1_1_norm.h5ad
-  # #   
-  # simulations_2:
-  #   batch_key: SubBatch
-  #   label_key: Group
-  #   organism: human
-  #   assay: simulation
-  #   file: data/sim2_norm.h5ad

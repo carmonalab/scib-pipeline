@@ -1,0 +1,18 @@
+rule download_data:
+    output: 
+        "input/{scenario}.h5ad"
+    message:
+        """
+        Downloading adata
+        wildcards: {wildcards}
+        parameters: {params}
+        output: {output}
+        """
+    params:
+        url = lambda wildcards: cfg.get_from_scenario(wildcards.scenario, key="url")
+    shell:
+        """
+        wget -O {output} {params.url}
+        """
+
+     
