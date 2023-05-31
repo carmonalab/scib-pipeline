@@ -91,11 +91,11 @@ snakemake --configfile configs/test_original_annotations-R4.1.yaml --cores 10
 ```
 
 We strongly recommand to use this snakemake on a HPC cluster e.g. using slurm 
-and the config file `configs/cluster.yml` you can run run the workflow as follow:
+and the config file `configs/cluster.yml` you can run the workflow as follow:
 
 ``` shell
 mkdir -p cluster/snakemake/; \
-snakemake -j 100 -n --configfile configs/test_original_annotations-R4.1.yaml \
+snakemake -j 100 --configfile configs/test_original_annotations-R4.1.yaml \
 --cluster-config configs/cluster.yml \
 --cluster "sbatch -A {cluster.account} \
     -p {cluster.partition} \
@@ -127,7 +127,7 @@ results of the pipeline that you can find on the results directory
 
 | Analysis             | config YAML file                                                                 | Rmarkdown file                                                                                   |
 |------------------|-------------------------|-----------------------------|
-| original annotations | [test_original_annotations-R4.1.yml](configs/test_original_annotations-R4.1.yml) | [originalAnnotationAnalysis.Rmd](./results/original_annotations/originalAnnotationsAnalysis.Rmd) |
+| original annotations | [test_original_annotations-R4.1.yml](configs/test_original_annotations-R4.1.yml) | [originalAnnotationAnalysis.Rmd](results/original_annotations/originalAnnotationAnalysis.Rmd) |
 | robustness to noise  | [test_supervised_methods-R4.1.yml](configs/test_supervised_methods-R4.1.yml)     | [SupervisedToolAnalysis.Rmd](results/supervised_tools_analysis/SupervisedToolAnalysis.Rmd)       |
 | final benchmark      | [test_final_benchmark-R4.1.yml](configs/test_final_benchmark-R4.1.yml)           | [finalBenchmarkAnalysis.Rmd](results/final_benchmark/finalBenchmarkAnalysis.Rmd)                 |
 

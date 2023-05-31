@@ -39,11 +39,11 @@ generated with the snakemake pipeline using the config file `configs/test_superv
 First we copy them in the current directory (already done on the repository)
 
 ```{r}
-if (!file.exists("../supervised_tool_analysis/metrics_R.csv")) {
+if (!file.exists("./metrics_R.csv")) {
   file.copy("../../supervised_tool_analysis/metrics_R.csv","./")
 }
 
-if (!file.exists("../supervised_tool_analysis/metrics.csv")) {
+if (!file.exists("./metrics.csv")) {
   file.copy("../../supervised_tool_analysis/metrics.csv","./")
 }
 ```
@@ -161,6 +161,7 @@ metrics <- rbind(metrics,metrics_unaltered[,colnames(metrics)])
 
 Regarding first analysis results with original annotations, we only analysed unscaled scenarios
 ```{r}
+#TO DO will be removed from results and config file as it is now in the final_benchmark config
 metrics <- metrics[metrics$scaling == "unscaled",]
 metricsR <- metricsR[metricsR$scaling == "unscaled",]
 ```
