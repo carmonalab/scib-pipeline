@@ -37,8 +37,8 @@ library(plyr)
 library(anndata)
 
 
-source("../../reports/knit_table.R") 
-source("../../reports/R_fun_report.R")
+source("../knit_table.R") 
+source("../R_fun_report.R")
 
 tasks <- c("human_pancreas", "lung_atlas", "immune_cell_hum","tcells_atlas")
 labels = c("Pancreas", "Lung", "Immune (hum)",'T cells')
