@@ -13,9 +13,11 @@ class ParsedConfig:
 
         self.ROOT = Path(config["ROOT"]).resolve()
         self.DATA_SCENARIOS = config["DATA_SCENARIOS"]
+        self.INPUT_ANNOTATIONS = config["INPUT_ANNOTATIONS"]
         self.SCALING = config["SCALING"]
         self.FEATURE_SELECTION = config["FEATURE_SELECTION"]
         self.METHODS = config["METHODS"]
+        self.dims = config["dims"]
         self.r_env = config["r_env"]
         self.py_env = config["py_env"]
         try:
@@ -50,6 +52,9 @@ class ParsedConfig:
 
     def get_all_scenarios(self):
         return list(self.DATA_SCENARIOS.keys())
+      
+    def get_all_input_annotations(self):
+        return list(self.INPUT_ANNOTATIONS)
 
     def get_feature_selection(self, key):
         if key not in self.FEATURE_SELECTION:
@@ -139,6 +144,7 @@ class ParsedConfig:
 
         if type_ == 'unintegrated':
             wildcards["scenario"] = self.get_all_scenarios()
+            wildcards["input_annotation"] = self.get_all_input_annotations()
             wildcards["hvg"] = ["hvg"]                           # modify to run methods only on hvg
             wildcards["scaling"] = ["unscaled"]
             wildcards["method"] = ["unintegrated"]
@@ -160,28 +166,32 @@ class ParsedConfig:
                     ot = set(output_types).intersection(self.get_from_method(method, "output_type"))
                     if not ot:
                         break  # skip if method output type is not defined in output_types
-                    ot, method, scaling, scenarios, features = reshape_wildcards(
+                    ot, method, scaling, scenarios, input_annotations, features = reshape_wildcards(
                         ot,
                         [method],
                         scaling,
                         self.get_all_scenarios(),
+                        self.get_all_input_annotations(),
                         self.get_all_feature_selections()
                     )
                     wildcards["o_type"].extend(ot)
                     wildcards["method"].extend(method)
                     wildcards["scaling"].extend(scaling)
                     wildcards["scenario"].extend(scenarios)
+                    wildcards["input_annotation"].extend(input_annotations)
                     wildcards["hvg"].extend(features)
                 else:
-                    method, scaling, scenarios, features = reshape_wildcards(
+                    method, scaling, scenarios, input_annotations, features = reshape_wildcards(
                         [method],
                         scaling,
                         self.get_all_scenarios(),
+                        self.get_all_input_annotations(),
                         self.get_all_feature_selections()
                     )
                     wildcards["method"].extend(method)
                     wildcards["scaling"].extend(scaling)
                     wildcards["scenario"].extend(scenarios)
+                    wildcards["input_annotation"].extend(input_annotations)
                     wildcards["hvg"].extend(features)
 
         return comb_func, wildcards

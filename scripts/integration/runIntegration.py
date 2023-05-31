@@ -227,6 +227,12 @@ if __name__ == '__main__':
     dims = int(args.latent_dims)
     celltype = args.celltype
     method = args.method
+    
+    if method in ["scgen",'scanvi']:
+        celltype = args.celltype
+    else:
+        celltype = None
+    
     methods = {
         'scanorama': scanorama,
         #'trvae': scib.integration.trvae, not included in our pipeline
@@ -244,6 +250,8 @@ if __name__ == '__main__':
     if method not in methods.keys():
         raise ValueError(f'Method "{method}" does not exist. Please use one of '
                          f'the following:\n{list(methods.keys())}')
+                         
+    
 
     run = methods[method]
     runIntegration(file, out, run, hvg, dims, batch, celltype)

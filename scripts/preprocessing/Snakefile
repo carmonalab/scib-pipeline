@@ -12,6 +12,8 @@ rule integration_prepare:
         """
     params:
         batch_key = lambda wildcards: cfg.get_from_scenario(wildcards.scenario, key="batch_key"),
+        label_key = lambda wildcards: cfg.get_from_scenario(wildcards.scenario, key="label_key"),
+        input_annotations = ",".join(cfg.get_all_input_annotations()),
         hvgs      = lambda wildcards: cfg.get_feature_selection(wildcards.hvg),
         scale     = lambda wildcards: "-s" if wildcards.scaling == "scaled" else "",
         rout      = lambda wildcards: "-r" if wildcards.prep == "RDS" else "",
@@ -23,6 +25,7 @@ rule integration_prepare:
     shell:
         """
         {params.env} python scripts/preprocessing/runPP.py -i {input.adata} \
-        -o {output} -b {params.batch_key} \
+        -o {output} -b {params.batch_key} -t {params.label_key} \
+        -a {params.input_annotations} \
         --hvgs {params.hvgs} {params.scale} {params.rout} {params.seurat}
         """

@@ -5,9 +5,9 @@ rule embeddings_single:
     input:
         adata  = lambda w: cfg.get_integrated_for_metrics(rules, w.method)
     output:
-        coords = cfg.ROOT / "{scenario}/embeddings/{scaling}/{hvg}/{method}_{o_type}.csv",
-        batch_png = cfg.ROOT / "{scenario}/embeddings/{scaling}/{hvg}/{method}_{o_type}_batch.png",
-        label_png = cfg.ROOT / "{scenario}/embeddings/{scaling}/{hvg}/{method}_{o_type}_labels.png"
+        coords = cfg.ROOT / "{scenario}/{input_annotation}/embeddings/{scaling}/{hvg}/{method}_{o_type}.csv",
+        batch_png = cfg.ROOT / "{scenario}/{input_annotation}/embeddings/{scaling}/{hvg}/{method}_{o_type}_batch.png",
+        label_png = cfg.ROOT / "{scenario}/{input_annotation}/embeddings/{scaling}/{hvg}/{method}_{o_type}_labels.png"
     message:
         """
         SAVE EMBEDDING
