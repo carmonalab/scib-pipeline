@@ -85,7 +85,7 @@ metricsR$method <- str_split_fixed(metricsR$method,pattern = "/",n=2)[,2]
 metricsR$output <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,2]
 metricsR$tool <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,1]
 
-metricsR_unaltered <- read.csv("../../original_annotations//metrics_R.csv",row.names = 1)
+metricsR_unaltered <- read.csv("../original_annotations//metrics_R.csv",row.names = 1)
 
 scenarios_unaltered <- str_split_fixed(rownames(metricsR_unaltered),pattern = "/",n=7)
 #head(scenarios_unaltered)
@@ -129,7 +129,7 @@ metrics <- cbind(scenarios,metrics)
 metrics$output <- str_split_fixed(metrics$method,pattern = "_",n=2)[,2]
 metrics$tool <- str_split_fixed(metrics$method,pattern = "_",n=2)[,1]
 
-metrics_unaltered <- read.csv("../../original_annotations/metrics.csv",row.names = 1)
+metrics_unaltered <- read.csv("../original_annotations/metrics.csv",row.names = 1)
 
 scenarios_unaltered <- str_split_fixed(rownames(metrics_unaltered),pattern = "/",n=7)
 #head(scenarios_unaltered)
