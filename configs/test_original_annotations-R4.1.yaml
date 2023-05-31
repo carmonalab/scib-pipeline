@@ -1,0 +1,119 @@
+ROOT: original_annotations
+r_env : scib-R4.1
+py_env : scib-pipeline-R4.1
+dims: 30
+unintegrated_metrics: true
+
+INPUT_ANNOTATIONS:
+  - original
+  
+
+FEATURE_SELECTION:
+  hvg: 2000
+  #full_feature: 0
+
+SCALING:
+  - unscaled
+  - scaled
+
+METHODS:
+# python methods
+  combat:
+    output_type: full
+  scanorama:
+    output_type:
+      - embed
+      - full
+  scanvi:
+    output_type: embed
+    no_scale: true
+    use_celltype: true
+  scgen:
+    output_type: full
+    use_celltype: true
+  scvi:
+    no_scale: true
+    output_type: embed
+  fastmnn:
+    R: true
+    output_type:
+      - embed
+      - full
+  harmony:
+    R: true
+    output_type: embed
+  seurat:
+    R: true
+    output_type:
+      - embed
+      - full
+  STACAS:
+    R: true
+    output_type:
+      - embed
+      - full
+  semiSupSTACAS:
+    R: true
+    output_type:
+      - embed
+      - full
+  # ownFeatSTACAS:
+  #   R: true
+  #   no_scale: true
+  #   output_type:
+  #     - embed
+  #     - full
+  # ownFeatSemiSupSTACAS:
+  #   R: true
+  #   no_scale: true
+  #   output_type:
+  #     - embed
+  #     - full
+  seuratrpca:
+      R: true
+      output_type:
+      - embed
+      - full
+
+DATA_SCENARIOS:
+
+  human_pancreas:
+    batch_key: tech
+    label_key: celltype
+    organism: human
+    assay: expression
+    file: input/human_pancreas.h5ad
+    #file: data/human_pancreas_norm_complexBatch.h5ad
+    url: https://figshare.com/ndownloader/files/24539828
+
+  tcells_atlas:
+    batch_key: Study
+    label_key: celltype
+    organism: mouse
+    assay: expression
+    file: input/tcells_atlas.h5ad
+    #file: data/tcells_with_fine_and_broad_annotations.h5ad
+    url: "https://drive.switch.ch/index.php/s/QzmSXI38KiVf1Yv/download"
+    #rds_url: "https://www.dropbox.com/s/6l0szn1hoystqbk/TIL_datasets_Seurat.rds?dl=0"
+    #rds_url: https://www.dropbox.com/s/emxmnwegfniirks/ref_TILAtlas_mouse_wcounts_list_merge_BroadCellType.rds?dl=0
+
+  lung_atlas:
+    batch_key: batch
+    label_key: cell_type
+    organism: human
+    assay: expression
+    file: input/lung_atlas.h5ad
+    #file: data/Lung_atlas_public.h5ad
+    url: https://figshare.com/ndownloader/files/24539942
+
+  immune_cell_hum:
+    batch_key: batch
+    label_key: final_annotation
+    organism: human
+    assay: expression
+    file: input/immune_cell_hum.h5ad
+    #file: data/Immune_ALL_human_with_fine_and_broad_annotations.h5ad
+    url: "https://drive.switch.ch/index.php/s/6mnRIheN1rmvYRo/download"
+    #url: https://figshare.com/ndownloader/files/25717166 original without broad annotations
+
+     
