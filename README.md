@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # Pipeline for benchmarking supervised integration of single-cell RNA-seq atlases
 
 This repository contains the snakemake pipeline for our benchmarking
@@ -28,10 +22,10 @@ annotation.
 
 -   Adding STACAS and semi supervised STACAS
 -   Using embedding output (PCA computed on scaled integrated data with Seurat) for R based methods
--   Integration tools packages updated
--   Embedding space for integration with a size fixed to 30 for all tools (Reduced space or bottleneck layer of autoencoders)
+-   Packages of integration tools updated
+-   Embedding space for integration with a size fixed to 30 for all tools (reduced space or bottleneck layer of autoencoders)
 -   Testing noisy labels to guide integration (partial annotations and/or label shuffling)
--   Testing different labels to guide integration as those used to score the methods (broader annotations)
+-   Testing different labels to guide integration of those used to score the methods (broader annotations)
 
 ## Tested atlases
 
@@ -55,13 +49,6 @@ currently only supports R 4.1 Call the script as follows
 
 ``` shell
 bash envs/create_conda_environments.sh -r 4.1
-```
-
-Check the script's help output in order to get the full list of
-arguments it uses.
-
-``` shell
-bash envs/create_conda_environments.sh -h 
 ```
 
 Once installation is successful, you will have the python environment
@@ -102,6 +89,25 @@ execute these jobs with up to 10 cores, call
 ``` shell
 snakemake --configfile configs/test_original_annotations-R4.1.yaml --cores 10
 ```
+
+We strongly recommand to use this snakemake on a HPC cluster e.g. using slurm 
+and the config file `configs/cluster.yml` you can run run the workflow as follow:
+
+``` shell
+mkdir -p cluster/snakemake/; \
+snakemake -j 100 -n --configfile configs/test_original_annotations-R4.1.yaml \
+--cluster-config configs/cluster.yml \
+--cluster "sbatch -A {cluster.account} \
+    -p {cluster.partition} \
+    -N {cluster.N} \
+    -t {cluster.time} \
+    --job-name {cluster.name} \
+    --mem {cluster.mem} \
+    --cpus-per-task {cluster.cpus-per-task}\
+    --output {cluster.output} \
+    --error {cluster.error}"
+```
+
 
 Then you can generate a table gathering the snakemake benchmark files
 (cpu time, memory usage...)
