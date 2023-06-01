@@ -48,8 +48,8 @@ labels = c("Pancreas", "Lung", "Immune (hum)",'T cells')
 
 This report requires the files :
 
--   `../../original_annotations/metrics_R.csv`
--   `../../original_annotations/metrics.csv`
+-   `../../final_benchmark/metrics_R.csv`
+-   `../../final_benchmark/metrics.csv`
 
 generated with the snakemake pipeline using the config file `configs/original_annotations-R4.1.yaml`.
 First we copy them in the current directory (these file are already provided here in the repository)
