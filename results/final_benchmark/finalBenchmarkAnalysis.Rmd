@@ -33,7 +33,7 @@ library(anndata)
 
 ```{r}
 #Move to directory of this script
-setwd("./results/final_benchmark")
+#setwd("./results/final_benchmark")
 
 source("../knit_table.R") 
 source("../R_fun_report.R")
@@ -144,7 +144,7 @@ for (t in unique(metrics$task)) {
       theme_bw() + NoLegend() 
     
     plot(p)
-    fname <- paste0("pdf/CiLISI_vs_ASW_label/",t,"_CiLISI_vs_ASW_label.pdf") 
+    fname <- paste0("pdf/CiLISI_vs_ASW_label/",t,"_",n,"_scatter.pdf") 
     ggsave(fname, plot=p, width=10, height=8)
     
   }
