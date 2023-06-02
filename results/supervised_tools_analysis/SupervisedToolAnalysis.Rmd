@@ -39,6 +39,10 @@ generated with the snakemake pipeline using the config file `configs/test_superv
 First we copy them in the current directory (already done on the repository)
 
 ```{r}
+#Move to directory of this script
+#setwd("./results/final_benchmark")
+
+
 if (!file.exists("./metrics_R.csv")) {
   file.copy("../../supervised_tool_analysis/metrics_R.csv","./")
 }
@@ -185,7 +189,11 @@ metrics$annotations <- factor(metrics$annotations,levels = c("original", "broad"
                                                              "unknown_10", "unknown_20","unknown_50","unknown_100"))
 metrics$ASW_label_raw <- 2*metrics$ASW_label-1
 
-ggplot(metrics[grepl(metrics$annotations,pattern = "shuffled|original"),],aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
+data <- metrics[grepl(metrics$annotations,pattern = "shuffled|original"),]
+
+ggplot(data,
+       aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
   scale_x_discrete(guide = guide_axis(angle = 45)) 
 ```
 
@@ -195,7 +203,10 @@ metricsR$annotations <- factor(metricsR$annotations,levels = c("original", "broa
                                                                "shuffled_10","shuffled_20","shuffled_50","shuffled_100",
                                                                "unknown_10", "unknown_20","unknown_50","unknown_100"))
 
-ggplot(metricsR[grepl(metricsR$annotations,pattern = "shuffled|original"),],aes(x = annotations,color=method,y=CiLISI,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
+data <- metricsR[grepl(metricsR$annotations,pattern = "shuffled|original"),]
+
+ggplot(data,aes(x = annotations,color=method,y=CiLISI,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
 
@@ -203,14 +214,20 @@ ggplot(metricsR[grepl(metricsR$annotations,pattern = "shuffled|original"),],aes(
 
 ## ASW label score
 ```{r}
-ggplot(metrics[grepl(metrics$annotations,pattern = "unknown|original"),],aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
+data <- metrics[grepl(metrics$annotations,pattern = "unknown|original"),]
+
+ggplot(data,aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
 
 ## CiLISI score
 
 ```{r}
-ggplot(metricsR[grepl(metricsR$annotations,pattern = "unknown|original"),],aes(x = annotations,color=method,y=CiLISI,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
+data <- metricsR[grepl(metricsR$annotations,pattern = "unknown|original"),]
+
+ggplot(data,aes(x = annotations,color=method,y=CiLISI,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
   scale_x_discrete(guide = guide_axis(angle = 45))
 ```
 # Broad annotation analysis
@@ -221,14 +238,22 @@ Please note that for lung and pancreas tasks broad and fine annotations are the 
 ## ASW label score
 
 ```{r}
-ggplot(metrics[grepl(metrics$annotations,pattern = "broad|original")&metrics$task %in% c('immune_cell_hum','tcells_atlas'),],aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
+data <- metrics[grepl(metrics$annotations,pattern = "broad|original")&
+                 metrics$task %in% c('immune_cell_hum','tcells_atlas'),]
+
+ggplot(data,
+       aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
   scale_x_discrete(guide = guide_axis(angle = 45)) + theme(legend.position = "bottom")
 ```
 
 ## CiLISI score
 
 ```{r}
-ggplot(metricsR[grepl(metricsR$annotations,pattern = "broad|original")&metricsR$task %in% c('immune_cell_hum','tcells_atlas'),],aes(x = annotations,color=method,y=CiLISI,group = method)) +geom_point()+ geom_line() +  facet_wrap('~task') +
+data <- metricsR[grepl(metricsR$annotations,pattern = "broad|original")&metricsR$task %in% c('immune_cell_hum','tcells_atlas'),]
+
+ggplot(data,aes(x = annotations,color=method,y=CiLISI,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
   scale_x_discrete(guide = guide_axis(angle = 45)) + theme(legend.position = "bottom")
 ```
 
@@ -243,13 +268,17 @@ allMetrics <- cbind(metrics,metricsR[rownames(metrics),c("CiLISI","CiLISI_means"
 
 ## Label shuflling and partial annotation
 
-```{r fig.height=1,fig.width=3.5}
+```{r fig.height=5,fig.width=10}
 
 for (t in unique(allMetrics$task)) {
   metricsTask <- allMetrics[allMetrics$task == t,]
   # plot(ggplot(metricsTask[grepl(metricsTask$annotations,pattern = "broad|original"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","annotations"), ncol = 5)+theme(legend.position = "bottom"))
-  plot(ggplot(metricsTask[grepl(metricsTask$annotations,pattern = "unknown|original"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","annotations"), ncol = 5)+theme(legend.position = "bottom"))
-  plot(ggplot(metricsTask[grepl(metricsTask$annotations,pattern = "shuffled|original"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","annotations"), ncol = 5)+theme(legend.position = "bottom"))
+  plot(ggplot(metricsTask[grepl(metricsTask$annotations,pattern = "unknown|original"),],
+              aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +
+         geom_point() + facet_wrap(c("task","annotations"), ncol = 5)+theme(legend.position = "bottom"))
+  plot(ggplot(metricsTask[grepl(metricsTask$annotations,pattern = "shuffled|original"),],
+              aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +
+         geom_point() + facet_wrap(c("task","annotations"), ncol = 5)+theme(legend.position = "bottom"))
 }
 ```
 ## Broad annotations
@@ -257,7 +286,10 @@ for (t in unique(allMetrics$task)) {
 ```{r}
 for (t in c("immune_cell_hum","tcells_atlas")) {
   metricsTask <- allMetrics[allMetrics$task == t,]
-  plot(ggplot(metricsTask[grepl(metricsTask$annotations,pattern = "broad|original"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","annotations"), ncol = 5)+theme(legend.position = "bottom"))
+  plot(ggplot(metricsTask[grepl(metricsTask$annotations,pattern = "broad|original"),],
+              aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +
+         geom_point() + facet_wrap(c("task","annotations"), ncol = 5)+
+         theme(legend.position = "bottom"))
   # plot(ggplot(metricsTask[grepl(metricsTask$annotations,pattern = "unknown|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","annotations"), ncol = 5)+theme(legend.position = "bottom"))
   # plot(ggplot(metricsTask[grepl(metricsTask$annotations,pattern = "shuffled|None"),],aes(x = CiLISI, y= ASW_label_raw, color = method, group = method)) +geom_point() + facet_wrap(c("task","annotations"), ncol = 5)+theme(legend.position = "bottom"))
 }
@@ -265,7 +297,7 @@ for (t in c("immune_cell_hum","tcells_atlas")) {
 
 ## Compute true mislabelling rates
 This chunk requires the preprocessed anndata objects `"../../supervised_tool_analysis/*/prepare/unscaled/hvg/adata_pre.h5ad` for each integration task generated with the `BenchmarkingSupervisedTool` snakemake pipeline.
-```{r}
+```{r eval=F}
 misRateTable <- data.frame()
 celltypeLabel = c("celltype","celltype","final_annotation","cell_type")
 names(celltypeLabel) <- c('tcells_atlas','human_pancreas','immune_cell_hum',"lung_atlas")
