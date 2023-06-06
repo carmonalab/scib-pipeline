@@ -134,16 +134,18 @@ for (t in unique(metrics$task)) {
     metricsSub <- metrics[metrics$noise == n & metrics$task == t,]
     p <- ggplot(metricsSub[metricsSub$methodLong %in% methodToCompare,],
                 aes(x = CiLISI,color=tool,y=ASW_label_raw,shape= scaling)) + 
-      geom_point(size=8) + facet_wrap(c("task","noise"),scales = "free",ncol = 2) +
+      geom_point(size=4) + facet_wrap(c("task","noise"),scales = "free",ncol = 2) +
       geom_label_repel(aes(label = paste0(tool,"_",scaling)),
-                       box.padding   = 0.35, 
-                       point.padding = 0.5,
+                       box.padding   = 0.1,
+                       label.padding = 0.1,
+                       point.padding = 0.2,
+                       size = 1.5,
                        segment.color = 'grey50') +
       theme_bw() + NoLegend() 
     
     plot(p)
     fname <- paste0("pdf/CiLISI_vs_ASW_label/",t,"_",n,"_scatter.pdf") 
-    ggsave(fname, plot=p, width=10, height=8)
+    ggsave(fname, plot=p, width=4, height=4)
     
   }
 }

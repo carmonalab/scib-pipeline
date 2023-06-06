@@ -40,7 +40,7 @@ First we copy them in the current directory (already done on the repository)
 
 ```{r}
 #Move to directory of this script
-#setwd("./results/final_benchmark")
+#setwd("./results/supervised_tools_analysis")
 
 
 if (!file.exists("./metrics_R.csv")) {
@@ -184,6 +184,9 @@ metrics <- metrics[metrics$annotations != "unknown_15_shuffled_20",]
 ## ASW label score
 
 ```{r}
+pdir <- "pdf/overfitting"
+dir.create(pdir,recursive = T)
+
 metrics$annotations <- factor(metrics$annotations,levels = c("original", "broad",
                                                              "shuffled_10","shuffled_20","shuffled_50","shuffled_100",
                                                              "unknown_10", "unknown_20","unknown_50","unknown_100"))
@@ -195,6 +198,8 @@ ggplot(data,
        aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
   geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
   scale_x_discrete(guide = guide_axis(angle = 45)) 
+
+ggsave(sprintf("%s/effect_of_shuffling_ss.pdf", pdir), height=4, width=6)
 ```
 
 ## CiLISI score
