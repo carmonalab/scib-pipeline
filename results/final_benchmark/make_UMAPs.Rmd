@@ -1,0 +1,71 @@
+---
+title: "Generate UMAP plots from pre-calc embeddings"
+author: "Massimo Andreatta"
+date: '2022-12-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+
+```{r cars}
+library(ggplot2)
+library(Seurat)
+library(ggrepel)
+```
+
+```{r}
+plot_UMAP <- function(embeddings, by = "celltype",
+                      cols = NULL, title=NULL,
+                      key="UMAP", dims=c(1,2), pt.size=NULL,
+                      raster=TRUE, raster.dpi=c(512, 512)) {
+  
+  dims <- paste0(key, dims)
+  data <- embeddings[,c("UMAP1","UMAP2", by)]
+  p <- SingleDimPlot(data, dims = dims, col.by = by,
+                     cols=cols, pt.size=pt.size,
+                     raster = raster, raster.dpi=raster.dpi) +
+    theme(aspect.ratio = 1)
+  
+  if (!is.null(title)) {
+    p <- p + ggtitle(title)
+  }
+  return(p)
+}
+```
+
+Where are the files with the embeddings
+```{r}
+# setwd("./results/final_benchmark")
+
+where <- "./umaps"
+dirs <- list.dirs(where, full.names = TRUE)
+
+height=5
+width=6
+
+pal1 <-  cols.batch <- c(RColorBrewer::brewer.pal(n=12, name="Paired"), RColorBrewer::brewer.pal(n=12, name="Set3"))
+pal2 <-  cols.batch <- c(RColorBrewer::brewer.pal(n=12, name="Set3"), RColorBrewer::brewer.pal(n=12, name="Paired"))
+
+for (d in dirs) {
+  fs <- list.files(d, pattern=".csv", full.names = T)
+  for (f in fs) {
+    print(f)
+    base <- sub('\\.csv$', '', f) 
+    emb <- read.csv(f)
+    
+    p1 <- plot_UMAP(emb, by="celltype", cols=pal1)
+    fname <- sprintf("%s.celltype.pdf", base)
+    ggsave(fname, plot = p1, height=height, width=width)
+    
+    by2 <- colnames(emb)[3]
+    p2 <- plot_UMAP(emb, by=by2, cols=pal2)
+    fname <- sprintf("%s.study.pdf", base)
+    ggsave(fname, plot = p2, height=height, width=width)
+    
+  }
+}  
+```
