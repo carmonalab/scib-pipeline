@@ -1,0 +1,433 @@
+---
+title: "Benchmark of all integration tools with noise for the supervised integration"
+author: "Leonard Herault"
+date: '2022-12-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## libraries
+
+```{r cars}
+library(ggplot2)
+library(Seurat)
+library(ggrepel)
+```
+
+
+```{r}
+library(tibble)
+library(RColorBrewer)
+library(dynutils)
+library(stringr)
+library(Hmisc)
+library(plyr)
+# library(STACAS)
+# library(Seurat)
+# library(scIntegrationMetrics)
+library(anndata)
+
+
+source("../knit_table.R") 
+source("../R_fun_report.R")
+
+tasks <- c("human_pancreas", "lung_atlas", "immune_cell_hum","tcells_atlas")
+labels = c("Pancreas", "Lung", "Immune (hum)",'T cells')
+```
+
+
+
+This report requires the files :
+
+-   `../../final_benchmark_50_comp/metrics_R.csv`
+-   `../../final_benchmark_50_comp/metrics.csv`
+
+generated with the snakemake pipeline using the config file `configs/original_annotations-R4.1.yaml`.
+First we copy them in the current directory (these file are already provided here in the repository)
+
+
+
+```{r}
+if (!file.exists("./metrics_R.csv")) {
+  file.copy("../../final_benchmark_50_comp/metrics_R.csv","./")
+}
+
+if (!file.exists("./metrics.csv")) {
+  file.copy("../../final_benchmark_50_comp/metrics.csv","./")
+}
+
+```
+
+
+## Loading integration metrics
+
+```{r}
+metricsR <- read.csv("metrics_R.csv",row.names = 1)
+
+scenarios <- str_split_fixed(rownames(metricsR),pattern = "/",n=7)
+head(scenarios)
+
+scenarios <- scenarios[,-1]
+colnames(scenarios) <- c("task","noise","folder","scaling","features","method")
+metricsR <- cbind(scenarios,metricsR)
+
+metricsR$method <- str_split_fixed(metricsR$method,pattern = "/",n=2)[,2]
+metricsR$output <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,2]
+metricsR$tool <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,1]
+
+head(metricsR)
+```
+
+```{r}
+metrics <- read.csv("metrics.csv",row.names = 1)
+
+
+scenarios <- str_split_fixed(rownames(metrics),pattern = "/",n=7)
+head(scenarios)
+
+scenarios <- scenarios[,-1]
+colnames(scenarios) <- c("task","noise","folder","scaling","features","method")
+metrics <- cbind(scenarios,metrics)
+
+metrics$output <- str_split_fixed(metrics$method,pattern = "_",n=2)[,2]
+metrics$tool <- str_split_fixed(metrics$method,pattern = "_",n=2)[,1]
+
+head(metrics)
+
+```
+Combine metrics computed in R and python
+
+```{r}
+rownames(metricsR) <- gsub(rownames(metricsR),pattern = "/R/",replacement = "/")
+metrics <- cbind(metrics, metricsR[rownames(metrics),c("CiLISI","CiLISI_means")])
+metrics$ASW_label_raw <- 2*metrics$ASW_label - 1
+
+metrics$methodLong <- paste(metrics$method,metrics$scaling,sep = "_")
+
+```
+
+## CiLISI vs ASW_label
+
+```{r fig.width=3.5,fig.width=3.5}
+methodToCompare <- c("STACAS_embed_unscaled","STACAS_embed_scaled",
+                     "semiSupSTACAS_embed_unscaled","semiSupSTACAS_embed_scaled",
+                     "seuratrpca_embed_unscaled","seuratrpca_embed_scaled",
+                     "seurat_embed_unscaled","seurat_embed_scaled",
+                     "fastmnn_embed_scaled","fastmnn_embed_unscaled",
+                     "harmony_embed_unscaled","harmony_embed_scaled",
+                     "scvi_embed_unscaled",
+                     "scanorama_embed_scaled","scanorama_embed_unscaled",
+                     "scanvi_embed_unscaled",
+                     "combat_full_scaled","combat_full_unscaled",
+                     "scgen_full_unscaled","unintegrated_full_unscaled"
+)
+for (t in unique(metrics$task)) {
+  for (n in unique(metrics$noise)) {
+    metricsSub <- metrics[metrics$noise == n & metrics$task == t,]
+  plot(ggplot(metricsSub[metricsSub$methodLong %in% methodToCompare,],
+              aes(x = CiLISI,color=tool,y=ASW_label_raw,shape= scaling)) +geom_point() + facet_wrap(c("task","noise"),scales = "free",ncol = 2) +
+         geom_label_repel(aes(label = paste0(tool,"_",scaling)),
+                          box.padding   = 0.35, 
+                          point.padding = 0.5,
+                          segment.color = 'grey50') + NoLegend())
+  }
+}
+```
+
+### Saving PDF
+
+```{r}
+dir.create("pdf/CiLISI_vs_ASW_label",recursive = T)
+for (t in unique(metrics$task)) {
+  pdf(file = paste0("pdf/CiLISI_vs_ASW_label/",t,"_CiLISI_vs_ASW_label.pdf"),width = 8, height = 8)
+  for (n in unique(metrics$noise)) {
+    metricsSub <- metrics[metrics$noise == n & metrics$task == t,]
+  plot(ggplot(metricsSub[metricsSub$methodLong %in% methodToCompare,],
+              aes(x = CiLISI,color=tool,y=ASW_label_raw,shape= scaling)) +geom_point() + facet_wrap(c("task","noise"),scales = "free",ncol = 2) +
+         geom_label_repel(aes(label = paste0(tool,"_",scaling)),
+                          box.padding   = 0.35, 
+                          point.padding = 0.5,
+                          segment.color = 'grey50') + NoLegend())
+  }
+  dev.off()
+}
+```
+
+## Correlations between batch mixing metrics.
+
+Pearson correlations:
+
+```{r}
+library(ggpubr)
+
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=kBET,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor()
+
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=iLISI,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor()
+
+```
+
+Spearman correlations:
+
+```{r}
+
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=kBET,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor(method = "spearman")
+
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=iLISI,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor(method = "spearman")
+```
+
+# Ranking of integration methods
+
+We discard gene matrix outputs (`"*_full"`) for R based methods (see `../../reports/BenchmarkCiLISI_ASW.Rmd`)
+
+## 15% Unknown and 20% shuflled labels to guide supervised methods
+
+### Only CiLISI and ASW_label
+
+```{r}
+metricsCiLISIlabelASW <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full")& metrics$noise == "unknown_15_shuffled_20",]
+metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label")]
+
+
+# remove noise info in rowname to directly use luecken function
+
+rownames(metricsCiLISIlabelASW) <- gsub(rownames(metricsCiLISIlabelASW), pattern = "/unknown_15_shuffled_20/", replacement = "/")
+
+dir.create("unknown_15_shuffled_20/CiLISIlabelASW/singleTask",recursive = T)
+dir.create("unknown_15_shuffled_20/CiLISIlabelASW/best")
+
+write.csv(metricsCiLISIlabelASW,"unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",col.names = T)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",
+  outdir = "unknown_15_shuffled_20/CiLISIlabelASW/",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  #csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  #csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = tasks,
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = labels,
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = F, keepBestOutput = F
+)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",
+  outdir = "unknown_15_shuffled_20/CiLISIlabelASW/best",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  #csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  #csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = tasks,
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = labels,
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = T, keepBestOutput = T
+)
+
+
+
+plotSingleTaskRNA("unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",outdir = "unknown_15_shuffled_20/CiLISIlabelASW/singleTask")
+
+```
+
+### All original metrics except hvg overlap
+
+We chose not to consider HVG overlap as it can be computed only for a minority of methods outputting a corrected matrix.
+
+```{r}
+oriMetrics <- colnames(read.csv("metrics.csv",row.names = 1))
+oriMetrics <- oriMetrics[oriMetrics != "hvg_overlap"]
+
+metricsMethodOK <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full")& metrics$noise == "unknown_15_shuffled_20", oriMetrics]
+
+rownames(metricsMethodOK) <- gsub(rownames(metricsMethodOK), pattern = "/unknown_15_shuffled_20/", replacement = "/")
+
+
+
+dir.create("unknown_15_shuffled_20/oriMetrics/singleTask",recursive = T)
+dir.create("unknown_15_shuffled_20/oriMetrics/best")
+
+write.csv(metricsMethodOK,"unknown_15_shuffled_20/oriMetrics/metrics.csv",col.names = T)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "unknown_15_shuffled_20/oriMetrics/metrics.csv",
+  outdir = "unknown_15_shuffled_20/oriMetrics",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  #csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  #csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = tasks,
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = labels,
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = F, keepBestOutput = F
+)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "unknown_15_shuffled_20/oriMetrics/metrics.csv",
+  outdir = "unknown_15_shuffled_20/oriMetrics/best",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  #csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  #csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = tasks,
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = labels,
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = T, keepBestOutput = T
+)
+
+
+
+plotSingleTaskRNA("unknown_15_shuffled_20/oriMetrics/metrics.csv",outdir = "unknown_15_shuffled_20/oriMetrics/singleTask")
+
+```
+
+## Broad annotations to guide supervised methods
+
+### Only CiLISI and ASW_label
+
+```{r}
+metricsCiLISIlabelASW <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full")& metrics$noise == "broad",]
+metricsCiLISIlabelASW <- metricsCiLISIlabelASW[metricsCiLISIlabelASW$task %in% c("immune_cell_hum","tcells_atlas"),]
+metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label")]
+
+
+# remove noise info in rowname to directly use Luecken function
+
+rownames(metricsCiLISIlabelASW) <- gsub(rownames(metricsCiLISIlabelASW), pattern = "/broad/", replacement = "/")
+
+dir.create("broad/CiLISIlabelASW/singleTask",recursive = T)
+dir.create("broad/CiLISIlabelASW/best")
+
+write.csv(metricsCiLISIlabelASW,"broad/CiLISIlabelASW/metrics.csv",col.names = T)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "broad/CiLISIlabelASW/metrics.csv",
+  outdir = "broad/CiLISIlabelASW/",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  #csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  #csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("immune_cell_hum", "tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),
+  labels_RNA = c("Immune (hum)" ,"T cells" ),
+  #labels_simulation = c("Sim 1", "Sim 2"),
+  weight_batch = 0.4,
+  keepBest = F, keepBestOutput = F
+)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "broad/CiLISIlabelASW/metrics.csv",
+  outdir = "broad/CiLISIlabelASW/best",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  #csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  #csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("immune_cell_hum", "tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = c("Immune (hum)" ,"T cells" ),
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = T, keepBestOutput = T
+)
+
+
+plotSingleTaskRNA("broad/CiLISIlabelASW/metrics.csv",outdir = "broad/CiLISIlabelASW/singleTask")
+
+```
+
+### All original metrics except HVG overlap
+
+```{r}
+oriMetrics <- colnames(read.csv("metrics.csv",row.names = 1))
+oriMetrics <- oriMetrics[oriMetrics != "hvg_overlap"]
+
+metricsMethodOK <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full")& metrics$noise == "broad",]
+metricsMethodOK <- metricsMethodOK[metricsMethodOK$task %in% c("immune_cell_hum","tcells_atlas"),]
+metricsMethodOK <- metricsMethodOK[,oriMetrics]
+
+
+
+rownames(metricsMethodOK) <- gsub(rownames(metricsMethodOK), pattern = "/broad/", replacement = "/")
+
+
+
+dir.create("broad/oriMetrics/singleTask",recursive = T)
+dir.create("broad/oriMetrics/best")
+
+write.csv(metricsMethodOK,"broad/oriMetrics/metrics.csv",col.names = T)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "broad/oriMetrics/metrics.csv",
+  outdir = "broad/oriMetrics",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  #csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  #csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("immune_cell_hum", "tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = c("Immune (hum)" ,"T cells" ),
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = F, keepBestOutput = F
+)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "broad/oriMetrics/metrics.csv",
+  outdir = "broad/oriMetrics/best",
+  # csv_usability_path = "./data/usability4bestMethods.csv",
+  #csv_scalability_time_path = "./scalability_score_time_revision.csv",
+  #csv_scalability_memory_path = "./scalability_score_memory_revision.csv",
+  ids_RNA = c("immune_cell_hum", "tcells_atlas"),
+  #ids_simulation = c("simulations_1_1", "simulations_2"),  
+  labels_RNA = c("Immune (hum)" ,"T cells" ),
+  #labels_simulation = c("Sim 1", "Sim 2"), 
+  weight_batch = 0.4,
+  keepBest = T, keepBestOutput = T
+)
+
+
+# Luecken function is not working with only two datasets
+plotSingleTaskRNA("broad/oriMetrics/metrics.csv",outdir = "broad/oriMetrics/singleTask")
+
+```
+
+## Check noise introduce in the data
+
+This chunk requires the preprocessed anndata objects `../final_benchmark/*/prepare/unscaled/hvg/adata_pre.h5ad` for each integration task generated with the snakemake pipeline.
+
+```{r}
+misRateTable <- data.frame()
+celltypeLabel = c("celltype","celltype","final_annotation","final_annotation","cell_type")
+names(celltypeLabel) <- c('tcells_atlas','human_pancreas','immune_cell_hum','immune_cell_hum_mou',"lung_atlas")
+
+atlases <- c('tcells_atlas','human_pancreas','immune_cell_hum',"lung_atlas")
+
+for (task in atlases) {
+  adata <- read_h5ad(paste0("../../final_benchmark/",task,"/prepare/unscaled/hvg/adata_pre.h5ad"))
+  
+  misRate <- table(adata$obs[,paste0('unknown_15_shuffled_20_',celltypeLabel[task])] != as.vector(adata$obs[,celltypeLabel[task]]))["TRUE"]/length(adata$obs[,celltypeLabel[task]])
+  unknownRate <- table(adata$obs[,paste0('unknown_15_shuffled_20_',celltypeLabel[task])] == "unknown")["TRUE"]/length(adata$obs[,celltypeLabel[task]])
+  misRateTable <- rbind(misRateTable,c(task, 'unknown_15_shuffled_20', misRate,unknownRate))
+  
+}
+colnames(misRateTable) <- c("task","'alteration'","mislabelled","unknown")
+misRateTable$mislabelled <- as.numeric(misRateTable$mislabelled)
+misRateTable$unknown <- as.numeric(misRateTable$unknown)
+
+ggplot(misRateTable, aes(x = task , y = mislabelled, fill = task)) + geom_bar(stat="identity", color="black", position=position_dodge())
+
+ggplot(misRateTable, aes(x = task , y = unknown, fill = task)) + geom_bar(stat="identity", color="black", position=position_dodge())
+```
+
+
