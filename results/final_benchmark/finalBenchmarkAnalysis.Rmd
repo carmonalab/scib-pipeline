@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## libraries
+## Libraries
 
 ```{r cars}
 library(ggplot2)
@@ -17,12 +17,6 @@ library(Seurat)
 library(ggrepel)
 ```
 
-This report requires the files :
-
--   `../data/metrics_R.csv`
--   `../data/metrics.csv`
-
-generated with the `BenchmarkingAllTools` snakemake pipeline that are available in `BenchmarkingAllTools/results` (you can simply copy paste them in a subdirectory `data` in the `BenchmarkingAllTools` directory of the repository).
 
 ```{r}
 library(tibble)
@@ -31,11 +25,13 @@ library(dynutils)
 library(stringr)
 library(Hmisc)
 library(plyr)
-# library(STACAS)
-# library(Seurat)
 # library(scIntegrationMetrics)
 library(anndata)
+```
 
+```{r}
+#Move to directory of this script
+#setwd("./results/final_benchmark")
 
 source("../knit_table.R") 
 source("../R_fun_report.R")
@@ -117,7 +113,9 @@ metrics$methodLong <- paste(metrics$method,metrics$scaling,sep = "_")
 
 ## CiLISI vs ASW_label
 
-```{r fig.width=3.5,fig.width=3.5}
+```{r fig.height=12, fig.width=14}
+dir.create("pdf/CiLISI_vs_ASW_label",recursive = T)
+
 methodToCompare <- c("STACAS_embed_unscaled","STACAS_embed_scaled",
                      "semiSupSTACAS_embed_unscaled","semiSupSTACAS_embed_scaled",
                      "seuratrpca_embed_unscaled","seuratrpca_embed_scaled",
@@ -130,37 +128,29 @@ methodToCompare <- c("STACAS_embed_unscaled","STACAS_embed_scaled",
                      "combat_full_scaled","combat_full_unscaled",
                      "scgen_full_unscaled","unintegrated_full_unscaled"
 )
+
 for (t in unique(metrics$task)) {
   for (n in unique(metrics$noise)) {
     metricsSub <- metrics[metrics$noise == n & metrics$task == t,]
-  plot(ggplot(metricsSub[metricsSub$methodLong %in% methodToCompare,],
-              aes(x = CiLISI,color=tool,y=ASW_label_raw,shape= scaling)) +geom_point() + facet_wrap(c("task","noise"),scales = "free",ncol = 2) +
-         geom_label_repel(aes(label = paste0(tool,"_",scaling)),
-                          box.padding   = 0.35, 
-                          point.padding = 0.5,
-                          segment.color = 'grey50') + NoLegend())
+    p <- ggplot(metricsSub[metricsSub$methodLong %in% methodToCompare,],
+                aes(x = CiLISI,color=tool,y=ASW_label_raw,shape= scaling)) + 
+      geom_point(size=4) + facet_wrap(c("task","noise"),scales = "free",ncol = 2) +
+      geom_label_repel(aes(label = paste0(tool,"_",scaling)),
+                       box.padding   = 0.1,
+                       label.padding = 0.1,
+                       point.padding = 0.2,
+                       size = 1.5,
+                       segment.color = 'grey50') +
+      theme_bw() + NoLegend() 
+    
+    plot(p)
+    fname <- paste0("pdf/CiLISI_vs_ASW_label/",t,"_",n,"_scatter.pdf") 
+    ggsave(fname, plot=p, width=4, height=4)
+    
   }
 }
 ```
 
-### Saving PDF
-
-```{r}
-dir.create("pdf/CiLISI_vs_ASW_label",recursive = T)
-for (t in unique(metrics$task)) {
-  pdf(file = paste0("pdf/CiLISI_vs_ASW_label/",t,"_CiLISI_vs_ASW_label.pdf"),width = 8, height = 8)
-  for (n in unique(metrics$noise)) {
-    metricsSub <- metrics[metrics$noise == n & metrics$task == t,]
-  plot(ggplot(metricsSub[metricsSub$methodLong %in% methodToCompare,],
-              aes(x = CiLISI,color=tool,y=ASW_label_raw,shape= scaling)) +geom_point() + facet_wrap(c("task","noise"),scales = "free",ncol = 2) +
-         geom_label_repel(aes(label = paste0(tool,"_",scaling)),
-                          box.padding   = 0.35, 
-                          point.padding = 0.5,
-                          segment.color = 'grey50') + NoLegend())
-  }
-  dev.off()
-}
-```
 
 ## Correlations between batch mixing metrics.
 
@@ -169,9 +159,11 @@ Pearson correlations:
 ```{r}
 library(ggpubr)
 
-ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=kBET,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor()
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=kBET,y=CiLISI)) +
+  geom_point() + facet_wrap("~task") + stat_cor()
 
-ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=iLISI,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor()
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=iLISI,y=CiLISI)) +
+  geom_point() + facet_wrap("~task") + stat_cor()
 
 ```
 
@@ -179,9 +171,11 @@ Spearman correlations:
 
 ```{r}
 
-ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=kBET,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor(method = "spearman")
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=kBET,y=CiLISI)) +
+  geom_point() + facet_wrap("~task") + stat_cor(method = "spearman")
 
-ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=iLISI,y=CiLISI)) + geom_point() + facet_wrap("~task") + stat_cor(method = "spearman")
+ggplot(metrics[metrics$methodLong %in% methodToCompare,],aes(x=iLISI,y=CiLISI)) +
+  geom_point() + facet_wrap("~task") + stat_cor(method = "spearman")
 ```
 
 # Ranking of integration methods
@@ -193,13 +187,15 @@ We discard gene matrix outputs (`"*_full"`) for R based methods (see `../../repo
 ### Only CiLISI and ASW_label
 
 ```{r}
-metricsCiLISIlabelASW <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full")& metrics$noise == "unknown_15_shuffled_20",]
+metricsCiLISIlabelASW <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full") &
+                                   metrics$noise == "unknown_15_shuffled_20",]
 metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label")]
 
 
 # remove noise info in rowname to directly use luecken function
 
-rownames(metricsCiLISIlabelASW) <- gsub(rownames(metricsCiLISIlabelASW), pattern = "/unknown_15_shuffled_20/", replacement = "/")
+rownames(metricsCiLISIlabelASW) <- gsub(rownames(metricsCiLISIlabelASW),
+                                        pattern = "/unknown_15_shuffled_20/", replacement = "/")
 
 dir.create("unknown_15_shuffled_20/CiLISIlabelASW/singleTask",recursive = T)
 dir.create("unknown_15_shuffled_20/CiLISIlabelASW/best")
@@ -238,7 +234,8 @@ plotBestMethodsRNA(
 
 
 
-plotSingleTaskRNA("unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",outdir = "unknown_15_shuffled_20/CiLISIlabelASW/singleTask")
+plotSingleTaskRNA("unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",
+                  outdir = "unknown_15_shuffled_20/CiLISIlabelASW/singleTask")
 
 ```
 
@@ -412,7 +409,7 @@ plotSingleTaskRNA("broad/oriMetrics/metrics.csv",outdir = "broad/oriMetrics/sing
 
 This chunk requires the preprocessed anndata objects `../final_benchmark/*/prepare/unscaled/hvg/adata_pre.h5ad` for each integration task generated with the snakemake pipeline.
 
-```{r}
+```{r eval=F}
 misRateTable <- data.frame()
 celltypeLabel = c("celltype","celltype","final_annotation","final_annotation","cell_type")
 names(celltypeLabel) <- c('tcells_atlas','human_pancreas','immune_cell_hum','immune_cell_hum_mou',"lung_atlas")
