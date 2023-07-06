@@ -40,38 +40,37 @@ First we copy them in the current directory (already done on the repository)
 
 ```{r}
 #Move to directory of this script
-#setwd("./results/supervised_tools_analysis")
+#setwd("./results/supervised_tool_analysis_50_comp")
 
 
 if (!file.exists("./metrics_R.csv")) {
-  file.copy("../../supervised_tool_analysis/metrics_R.csv","./")
+  file.copy("../../supervised_tool_analysis_50_comp/metrics_R.csv","./")
 }
 
 if (!file.exists("./metrics.csv")) {
-  file.copy("../../supervised_tool_analysis/metrics.csv","./")
+  file.copy("../../supervised_tool_analysis_50_comp/metrics.csv","./")
 }
 ```
+
 
 It also requires the files
 -   `../original_annotations/metrics_R.csv`
 -   `../original_annotations/metrics.csv`
 
 generated with the snakemake pipeline using the config file `configs/test_original_annotations-R4.1.yaml`.
-First we copy them in the `results/original_annotations` directory (already done in the repository)
+First we copy them in the `results/original_annotations_50_comp` directory (already done in the repository)
+
+#NB: this needs to be generated
 
 ```{r}
-if (!file.exists("../original_annotations/metrics_R.csv")) {
-  file.copy("../../original_annotations/metrics_R.csv","../original_annotations/metrics_R.csv")
+if (!file.exists("../original_annotations_50_comp/metrics_R.csv")) {
+  file.copy("../../original_annotations_50_comp/metrics_R.csv","../original_annotations_50_comp/metrics_R.csv")
 }
 
-if (!file.exists("../original_annotations/metrics.csv")) {
-  file.copy("../../original_annotations/metrics.csv","../original_annotations/metrics.csv")
+if (!file.exists("../original_annotations_50_comp/metrics.csv")) {
+  file.copy("../../original_annotations_50_comp/metrics.csv","../original_annotations_50_comp/metrics.csv")
 }
 ```
-
-
-
-
 
 ## Integration metric loading
 
@@ -89,7 +88,7 @@ metricsR$method <- str_split_fixed(metricsR$method,pattern = "/",n=2)[,2]
 metricsR$output <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,2]
 metricsR$tool <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,1]
 
-metricsR_unaltered <- read.csv("../original_annotations//metrics_R.csv",row.names = 1)
+metricsR_unaltered <- read.csv("../original_annotations_50_comp/metrics_R.csv",row.names = 1)
 
 scenarios_unaltered <- str_split_fixed(rownames(metricsR_unaltered),pattern = "/",n=7)
 #head(scenarios_unaltered)
@@ -173,7 +172,6 @@ metricsR <- metricsR[metricsR$scaling == "unscaled",]
 We don't analyze the mixing between partial and shuffled annotations in this analysis
 
 ```{r}
-metrics <- metrics[metrics$annotations != "unknown_15_shuffled_20",]
 metrics <- metrics[metrics$annotations != "unknown_15_shuffled_20",]
 
 ```

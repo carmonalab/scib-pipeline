@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Libraries
 
-```{r cars}
+```{r}
 library(ggplot2)
 library(Seurat)
 library(ggrepel)
@@ -39,7 +39,7 @@ plot_UMAP <- function(embeddings, by = "celltype",
 
 Where are the files with the embeddings
 ```{r}
-# setwd("./results/final_benchmark")
+# setwd("./results/final_benchmark_50comp")
 
 where <- "./umaps"
 dirs <- list.dirs(where, full.names = TRUE)
