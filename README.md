@@ -24,6 +24,7 @@ annotation.
 -   Using embedding output (PCA computed on scaled integrated data with Seurat) for R based methods
 -   Embedding/latent space for integration with a size fixed (e.g. 30, 50) for all tools (reduced space or bottleneck layer of autoencoders)
 -   Testing noisy and missing cell type labels to guide integration (i.e. partially removing and shuffling cell type labels)
+-   New batch-correction metric CiLISI (cell type-aware LISI) computed with [scIngrationMetrics](https://github.com/carmonalab/scIntegrationMetrics)
 -   Packages of integration tools updated
 
 
@@ -140,3 +141,10 @@ Tools that are compared include: -
 [scVI](https://github.com/YosefLab/scVI) - [Seurat v4 (CCA and
 RPCA)](https://github.com/satijalab/seurat) - -
 [Harmony](https://github.com/immunogenomics/harmony)
+
+
+## References
+
+[Benchmarking atlas-level data integration in single-cell genomics. Luecken et al, 2020](https://doi.org/10.1038/s41592-021-01336-8)
+
+[Semi-supervised integration of single-cell transcriptomics data. Andreatta et al, 2023](https://doi.org/10.1101/2023.07.07.548105)
