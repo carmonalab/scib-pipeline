@@ -27,9 +27,6 @@ annotation.
 -   Testing noisy labels to guide integration (partial annotations and/or label shuffling)
 -   Testing different labels to guide integration of those used to score the methods (broader annotations)
 
-## Tested atlases
-
-TO COMPLETE
 
 ## Installation
 
