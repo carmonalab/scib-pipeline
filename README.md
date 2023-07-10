@@ -20,12 +20,11 @@ annotation.
 
 ## Major modifications regarding the original pipeline
 
--   Adding STACAS and semi supervised STACAS
+-   Adding STACAS and semi-supervised STACAS
 -   Using embedding output (PCA computed on scaled integrated data with Seurat) for R based methods
+-   Embedding/latent space for integration with a size fixed (e.g. 30, 50) for all tools (reduced space or bottleneck layer of autoencoders)
+-   Testing noisy and missing cell type labels to guide integration (i.e. partially removing and shuffling cell type labels)
 -   Packages of integration tools updated
--   Embedding space for integration with a size fixed to 30 for all tools (reduced space or bottleneck layer of autoencoders)
--   Testing noisy labels to guide integration (partial annotations and/or label shuffling)
--   Testing different labels to guide integration of those used to score the methods (broader annotations)
 
 
 ## Installation
