@@ -44,8 +44,8 @@ labels = c("Pancreas", "Lung", "Immune (hum)",'T cells')
 
 This report requires the files :
 
--   `../../final_benchmark/metrics_R.csv`
--   `../../final_benchmark/metrics.csv`
+-   `../../final_benchmark_50_comp/metrics_R.csv`
+-   `../../final_benchmark_50_comp/metrics.csv`
 
 generated with the snakemake pipeline using the config file `configs/original_annotations-R4.1.yaml`.
 First we copy them in the current directory (these file are already provided here in the repository)
@@ -54,11 +54,11 @@ First we copy them in the current directory (these file are already provided her
 
 ```{r}
 if (!file.exists("./metrics_R.csv")) {
-  file.copy("../final_benchmark_50_comp//metrics_R.csv","./")
+  file.copy("../../final_benchmark_50_comp//metrics_R.csv","./")
 }
 
 if (!file.exists("./metrics.csv")) {
-  file.copy("../final_benchmark_50_comp/metrics.csv","./")
+  file.copy("../../final_benchmark_50_comp/metrics.csv","./")
 }
 
 ```
