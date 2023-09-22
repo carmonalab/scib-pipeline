@@ -9,6 +9,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', help='Snakemake config file', required=True)
     parser.add_argument('-t', '--task', required=True)
     parser.add_argument('-m', '--method', required=True)
+    parser.add_argument('-l', '--labels', required=True)
     parser.add_argument("-v", '--hvgs', help='pre-processed by HVG filtering', action='store_true')
     parser.add_argument('-s', '--scale', action='store_true', help='pre-processed by scaling')
 
@@ -17,6 +18,7 @@ if __name__ == '__main__':
     task = args.task
     hvgs = args.hvgs
     scale = args.scale
+    labels = args.labels
     method = args.method
 
     # Load config file
@@ -34,12 +36,13 @@ if __name__ == '__main__':
     # Get path values
     folder = params['ROOT']
     t_folder = task
+    l_folder = labels
     s_folder = 'scaled' if scale else 'unscaled'
     h_folder = 'hvg' if hvgs else 'full_feature'
     r_folder = 'R/' if 'R' in params['METHODS'][method] else ''
     filename = method + '.h5ad'
 
-    folder_path = '/'.join([folder, task, 'integration', s_folder, h_folder]) + '/' + r_folder
+    folder_path = '/'.join([folder, task,labels, 'integration', s_folder, h_folder]) + '/' + r_folder
     full_path = folder_path + filename
 
     if 'R' in params['METHODS'][method]:

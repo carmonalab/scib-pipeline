@@ -40,6 +40,7 @@ if(opt$t == "full") {
 
 obj = read_h5ad(opt$i)
 print(obj)
+if (length(obj$obsm)>0) {
 sobj <- CreateSeuratObject(counts = Matrix::t(obj$X),meta.data = obj$obs[,c(opt$b,opt$l)],assay = "integrated")
 sobj[[reductionKey]] <- CreateDimReducObject(embeddings = obj$obsm[[reductionKey]],key = "PC",assay = "integrated")
 
@@ -62,5 +63,12 @@ print(results)
 metricTable <- t(data.frame(results))
 
 colnames(metricTable) <- paste0(opt$m,"_",opt$t)
+
+} else {
+  print("Setting metrics to NA because integration failed (no integrated embedding")
+  metricTable <- t(data.frame(CiLISI = c(NA),CiLISI_means = c(NA)))
+  colnames(metricTable) <- paste0(opt$m,"_",opt$t)
+  
+  }
 
 write.csv(metricTable,opt$o)

@@ -129,6 +129,12 @@ results of the pipeline that you can find on the results directory
 | final benchmark      | [test_final_benchmark-R4.1.yml](configs/test_final_benchmark-R4.1.yml)           | [finalBenchmarkAnalysis.Rmd](results/final_benchmark/finalBenchmarkAnalysis.Rmd)                 |
 
 
+## Failed integration
+
+Some tools fail to integrate certain task, in order to complete the workflow and set NA to integration metrics for these scenarios you can use the script `integration_fail_file.py` as follow:
+
+    python scripts/integration_fail_file.py  -c configs/review_tests.yaml -t Pancreas_rm8 -l unknown_15_shuffled_20 -m seuratrpca -v
+
 
 ## Tools
 
