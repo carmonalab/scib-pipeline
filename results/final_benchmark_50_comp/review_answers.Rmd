@@ -47,7 +47,7 @@ methodToCompare <- c("STACAS_embed",
 )
 
 
-all.task.scores.kept.methods <-  all.task.scores[all.task.scores$method %in% methodToCompare,]
+all.task.scores.kept.methods <-  all.task.scores[all.task.scores$method_output %in% methodToCompare,]
 
 all.task.scores.kept.methods$Method <- factor(all.task.scores.kept.methods$Method)
 
@@ -65,9 +65,9 @@ ssSTACAS\*_embed_unscaled, scANVI\*_embed_unscaled are highlighted.
 ```{r}
 ggplot() + geom_boxplot(data = all.task.scores.kept.methods,  aes(x=task,y=Overall.Score),inherit.aes = F) +
   geom_point(data = all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in% c("ssSTACAS*","scANVI*","Unintegrated") & all.task.scores.kept.methods$Scaling == "unscaled",],
-       aes(x=task,y=Overall.Score,color = Method,shape = Scaling,group = method_full),size = 3) +
+       aes(x=task,y=Overall.Score,color = Method,group = method_full),size = 3) +
   geom_line(data =  all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in% c("ssSTACAS*","scANVI*","Unintegrated") & all.task.scores.kept.methods$Scaling == "unscaled",],
-       aes(x=task,y=Overall.Score,color = Method,shape = Scaling,group = method_full)) + 
+       aes(x=task,y=Overall.Score,color = Method,group = method_full)) + 
   scale_color_manual(values=palette) + 
   scale_shape_manual(values = 17)
 ```
@@ -80,9 +80,9 @@ ssSTACAS\*_embed_unscaled, scANVI\*_embed_unscaled and Unintegrated are highligh
 ```{r}
 ggplot() + geom_boxplot(data = all.task.scores.kept.methods,  aes(x=task,y=Bio.conservation),inherit.aes = F) +
   geom_point(data = all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in% c("ssSTACAS*","scANVI*","Unintegrated") & all.task.scores.kept.methods$Scaling == "unscaled",],
-       aes(x=task,y=Bio.conservation,color = Method,shape = Scaling,group = method_full),size = 3) +
+       aes(x=task,y=Bio.conservation,color = Method,group = method_full),size = 3) +
   geom_line(data =  all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in% c("ssSTACAS*","scANVI*","Unintegrated") & all.task.scores.kept.methods$Scaling == "unscaled",],
-       aes(x=task,y=Bio.conservation,color = Method,shape = Scaling,group = method_full)) + 
+       aes(x=task,y=Bio.conservation,color = Method,group = method_full)) + 
   scale_color_manual(values=palette) + 
   scale_shape_manual(values = 17)
 
@@ -97,9 +97,9 @@ ssSTACAS\*_embed_unscaled, scANVI\*_embed_unscaled are highlighted.
 ```{r}
 ggplot() + geom_boxplot(data = all.task.scores.kept.methods,  aes(x=task,y=Batch.Correction),inherit.aes = F) +
   geom_point(data = all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in% c("ssSTACAS*","scANVI*","Unintegrated") & all.task.scores.kept.methods$Scaling == "unscaled",],
-       aes(x=task,y=Batch.Correction,color = Method,shape = Scaling,group = method_full),size = 3) +
+       aes(x=task,y=Batch.Correction,color = Method,group = method_full),size = 3) +
   geom_line(data =  all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in% c("ssSTACAS*","scANVI*","Unintegrated") & all.task.scores.kept.methods$Scaling == "unscaled",],
-       aes(x=task,y=Batch.Correction,color = Method,shape = Scaling,group = method_full)) + 
+       aes(x=task,y=Batch.Correction,color = Method,group = method_full)) + 
   scale_color_manual(values=palette) + 
   scale_shape_manual(values = 17)
 
@@ -117,9 +117,9 @@ pancreas.task <- all.task.scores.kept.methods[all.task.scores.kept.methods$task 
 for (m in Bio.conservation.metics) {
 p <- ggplot() + geom_boxplot(data = pancreas.task,  aes_string(x="task",y=m),inherit.aes = F) +
   geom_point(data = pancreas.task[pancreas.task$Method %in% c("ssSTACAS*","scANVI*","Unintegrated") & pancreas.task$Scaling == "unscaled",],
-       aes_string(x="task",y=m,color = "Method",shape = "Scaling",group = "method_full"),size = 3) +
+       aes_string(x="task",y=m,color = "Method",group = "method_full"),size = 3) +
   geom_line(data =  pancreas.task[pancreas.task$Method %in% c("ssSTACAS*","scANVI*","Unintegrated") & pancreas.task$Scaling == "unscaled",],
-       aes_string(x="task",y=m,color = "Method",shape = "Scaling",group = "method_full")) + 
+       aes_string(x="task",y=m,color = "Method",group = "method_full")) + 
   scale_color_manual(values=palette) + 
   scale_shape_manual(values = 17) + ylim(c(0,1))
 print(p)
