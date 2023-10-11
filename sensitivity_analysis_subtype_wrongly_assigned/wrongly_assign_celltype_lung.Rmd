@@ -1,0 +1,176 @@
+```{r}
+library(anndata)
+library(Seurat)
+```
+```{r}
+adata <- read_h5ad("../input/lung_atlas.h5ad")
+
+adata
+```
+
+```{r}
+seurat.obj <- CreateSeuratObject(meta.data = adata$obs,counts = Matrix::t(adata$layers['counts']))
+seurat.obj <- AggregateExpression(seurat.obj,group.by = "cell_type",slot = "counts",return.seurat = T)
+seurat.obj <- NormalizeData(seurat.obj)
+
+distances <- dist(as.matrix(Matrix::t(seurat.obj@assays$RNA@data)))
+
+library(reshape2)
+
+distances.df <- melt(as.matrix(distances), varnames = c("row", "col"))
+distances.df <- distances.df[distances.df$value != 0,]
+distances.df <- distances.df[order(distances.df$value),]
+distances.df <- distances.df[!duplicated(distances.df$value),]
+
+distances.df <- distances.df[1:20,]
+distances.df
+for (c in c(1:20)) {
+  adata$obs[,paste0("closest_",c,"_cell_type")] <- factor(adata$obs[,"cell_type"],
+                                                       levels = c(levels(adata$obs[,"cell_type"]),
+                                                                  "merged_type"))
+  
+  adata$obs[,paste0("closest_",c,"_cell_type")][adata$obs[,paste0("closest_",c,"_cell_type")] == as.character(distances.df[c,"row"])] <- "merged_type"
+  adata$obs[,paste0("closest_",c,"_cell_type")][adata$obs[,paste0("closest_",c,"_cell_type")] == as.character(distances.df[c,"col"])] <- "merged_type"
+  adata$obs[,paste0("closest_",c,"_cell_type")] <- droplevels(adata$obs[,paste0("closest_",c,"_cell_type")] )
+}
+
+
+
+
+
+
+
+
+```
+
+## hiding 15% and shuffling 20% in neighbor subtypes
+
+```{r}
+getClosestSubtype <- function(distances) {
+  res <- as.character(rownames(as.matrix(distances))[order(as.matrix(distances)[,1])[2]])
+  return(res)
+}
+
+closestSubtypes <- apply(data.frame(as.matrix(distances)),MARGIN = 2,FUN = getClosestSubtype)
+names(closestSubtypes) <- rownames(as.matrix(distances))
+
+closestSubtypes
+
+set.seed(2023)
+
+#Hiding 
+cells.to.hide <- sample(x = rownames(adata),
+                        size = round(0.15*length(rownames(adata))))
+
+adata$obs$neighbor_shuffled_20_unknown_15_cell_type <- factor(adata$obs[,"cell_type"],
+                                                                              levels = c(levels(adata$obs[,"cell_type"]),
+                                                                                         "unknown"))
+
+adata$obs[cells.to.hide,"neighbor_shuffled_20_unknown_15_cell_type"] <- "unknown"
+#shuffling neighbors
+cells.to.shuffle <- sample(x = rownames(adata)[!rownames(adata) %in% cells.to.hide],
+                        size = round(0.20*length(rownames(adata))))
+
+adata$obs[cells.to.shuffle,"neighbor_shuffled_20_unknown_15_cell_type"] <- plyr::mapvalues(x = adata$obs[cells.to.shuffle,"neighbor_shuffled_20_unknown_15_cell_type"],
+                                                                                             from = names(closestSubtypes),
+                                                                                             to = closestSubtypes)
+
+head(adata$obs[cells.to.shuffle,c("cell_type","neighbor_shuffled_20_unknown_15_cell_type")],n=10)
+head(adata$obs[cells.to.hide,c("cell_type","neighbor_shuffled_20_unknown_15_cell_type")],n=10)
+
+```
+
+
+```{r fig.height=3,fig.width=3}
+hclust.res <- hclust(distances)
+
+library(ggdendro)
+library(ggplot2)
+dendro.plot <- ggdendrogram(hclust.res, rotate = TRUE, theme_dendro = T) 
+dendro.plot <- dendro.plot + theme(axis.text.x = element_blank())
+dendro.plot
+saveRDS(dendro.plot,"hclust_lung.rds")
+
+adata$obs[,"merging_0_cell_type"] <- as.vector(adata$obs["cell_type"]) 
+merging.step <- 1
+for (r in c(1:dim(hclust.res$merge)[1])) {
+  
+  merging <- hclust.res$merge[r,]
+  subtype1.num <- hclust.res$merge[r,1]
+  subtype2.num <- hclust.res$merge[r,2]
+  if (subtype1.num < 0) {
+    subtype1 <- as.character(hclust.res$labels[-subtype1.num])
+  } else {
+    subtype1 <- paste0("merging_",subtype1.num)
+  }
+  if (subtype2.num < 0) {
+    subtype2 <- as.character(hclust.res$labels[-subtype2.num])
+  } else {
+    subtype2 <- paste0("merging_",subtype2.num)
+  }
+  
+  adata$obs[,paste0("merging_",merging.step,"_cell_type")] <- factor(adata$obs[,paste0("merging_",merging.step-1,"_cell_type")],
+                                                       levels = c(levels(adata$obs[,paste0("merging_",merging.step-1,"_cell_type")]),
+                                                                  paste0("merging_",merging.step)))
+  adata$obs[,paste0("merging_",merging.step,"_cell_type")][adata$obs[,paste0("merging_",merging.step-1,"_cell_type")] == subtype1] <- paste0("merging_",merging.step)
+  adata$obs[,paste0("merging_",merging.step,"_cell_type")][adata$obs[,paste0("merging_",merging.step-1,"_cell_type")] == subtype2] <- paste0("merging_",merging.step)
+  adata$obs[,paste0("merging_",merging.step,"_cell_type")] <- droplevels(adata$obs[,paste0("merging_",merging.step,"_cell_type")])
+  merging.step <- merging.step + 1
+  
+}
+
+# duplicate final merging to have the same number (15) for each dataset in the workflow
+
+for (r in c(merging.step:15)){
+  adata$obs[,paste0("merging_",r,"_cell_type")] <- adata$obs[,paste0("merging_",merging.step-1,"_cell_type")]
+}
+
+table(adata$obs["cell_type"])
+table(adata$obs["merging_1_cell_type"])
+table(adata$obs["merging_13_cell_type"])
+table(adata$obs["merging_15_cell_type"])
+
+```
+
+
+```{r}
+# for (X in c(1:length(closestSubtypes))) {
+#   
+#   subtype1.name <- gsub(names(closestSubtypes[X]),pattern = " ",replacement = "_")
+#   subtype1.name <- gsub(subtype1.name,pattern = "\\+",replacement = "pos")
+#   subtype1.name <- gsub(subtype1.name,pattern = "\\-",replacement = "_")
+#   subtype2.name <- gsub(as.character(closestSubtypes[X]),pattern = " ",replacement = "_")
+#   subtype2.name <- gsub(subtype2.name,pattern = "\\+",replacement = "pos")
+#   subtype2.name <- gsub(subtype2.name,pattern = "\\-",replacement = "_")
+#   
+#   if (subtype1.name > subtype2.name) {
+#     anno.name <- paste0(subtype1.name,"_with_",subtype2.name,"_cell_type")
+#   } else { 
+#     anno.name <- paste0(subtype2.name,"_with_",subtype1.name,"_cell_type")
+#   } 
+#   
+#   print(anno.name)
+#   
+#   if (! anno.name %in% colnames(adata$obs)) {
+#     adata$obs[anno.name] <- adata$obs["cell_type"]
+#     adata$obs[anno.name][adata$obs[anno.name] == names(closestSubtypes[X])] <- closestSubtypes[X]
+#     adata$obs[anno.name] <- droplevels(adata$obs[anno.name])
+#   }
+# }
+
+# table(adata$obs$cell_type)
+# table(adata$obs$ductal_with_acinar_cell_type)
+
+```
+
+```{r}
+
+
+```
+```{r}
+cat(colnames(adata$obs)[endsWith(colnames(adata$obs),"cell_type")],sep = "\n  - ")
+```
+```{r}
+write_h5ad(adata,"../input/lung_atlas_subtype_wrongly_assigned.h5ad")
+```
+
