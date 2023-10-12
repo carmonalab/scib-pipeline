@@ -1,0 +1,173 @@
+---
+title: "Zoom in on differences between STACAS and scANVI"
+author: "Leonard Herault"
+date: '2023-25-09'
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+```
+
+Analyze differences between ssSTACAS and scANVI rankings
+```{r}
+tasks <- c("human_pancreas", "lung_atlas", "immune_cell_hum","tcells_atlas")
+all.task.scores <- data.frame()
+for (t in tasks) {
+  task.scores <- read.csv(paste0("unknown_15_shuffled_20/oriMetrics/singleTask/",t,"_summary_scores.csv") )
+  task.scores <- task.scores[,which(colnames(task.scores)!= "trajectory.conservation")]
+  task.scores$task <- t
+  all.task.scores <- rbind(all.task.scores,task.scores)
+}
+
+all.task.scores$method_output <- paste0(all.task.scores$Method,"_",all.task.scores$Output)
+all.task.scores$method_full <- paste0(all.task.scores$method,"_",all.task.scores$Scaling)
+
+```
+
+```{r}
+palette <-  c(RColorBrewer::brewer.pal(n=12, name="Paired"), RColorBrewer::brewer.pal(n=12, name="Set3"))
+#remove yellows
+palette <- palette[!palette %in% c("#FFFF99","#FFFFB3","#FFED6F")]
+
+
+
+methodToCompare <- c("STACAS_embed",
+                     "ssSTACAS*_embed",
+                     "Seurat v4 RPCA_embed",
+                     "Seurat v4 CCA_embed",
+                     "fastMNN_embed",
+                     "Harmony_embed",
+                     "scVI_embed", 
+                     "Scanorama_embed",
+                     "scANVI*_embed", 
+                     "ComBat_gene",
+                     "scGen*_gene",
+                     "Unintegrated_gene"
+)
+
+
+all.task.scores.kept.methods <-  all.task.scores[all.task.scores$method_output %in% methodToCompare,]
+
+all.task.scores.kept.methods$Method <- factor(all.task.scores.kept.methods$Method)
+
+names(palette) <- c("ComBat","FastMNN","Harmnoy","Scanorama","scANVI*","scGen*","scVI","ssSTACAS*","Seurat v4 CCA","Seurat v4 RPCA","STACAS","Unintegrated")
+
+
+
+
+```
+
+# Boxplot for Overall.Score (60% Bio.conservation, 40% Batch.correction)
+All methods present in figure 3 ABCD, scaled/unscaled.
+ssSTACAS\*_embed_unscaled, scANVI\*_embed_unscaled are highlighted.
+
+```{r}
+p_overall <- ggplot() + geom_boxplot(data = all.task.scores.kept.methods,
+                        aes(x=task,y=Overall.Score),inherit.aes = F) +
+  geom_point(data = all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in%
+                                                   c("ssSTACAS*","scANVI*","Unintegrated") &
+                                                   all.task.scores.kept.methods$Scaling == "unscaled",],
+       aes(x=task,y=Overall.Score,color = Method,group = method_full),size = 2) +
+  geom_line(data =  all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in%
+                                                   c("ssSTACAS*","scANVI*","Unintegrated") &
+                                                   all.task.scores.kept.methods$Scaling == "unscaled",],
+       aes(x=task,y=Overall.Score,color = Method,group = method_full)) + 
+  scale_color_manual(values=palette) + 
+  scale_shape_manual(values = 17) +
+  theme_minimal()
+
+p_overall
+```
+
+
+# Boxplot for Bio.conservation scores
+All methods present in figure 3 ABCD, scaled/unscaled.
+ssSTACAS\*_embed_unscaled, scANVI\*_embed_unscaled and Unintegrated are highlighted.
+
+```{r}
+p_bio <- ggplot() +
+  geom_boxplot(data = all.task.scores.kept.methods,  aes(x=task,y=Bio.conservation),inherit.aes = F) +
+  geom_point(data = all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in%
+                                                   c("ssSTACAS*","scANVI*","Unintegrated") &
+                                                   all.task.scores.kept.methods$Scaling == "unscaled",],
+       aes(x=task,y=Bio.conservation,color = Method,group = method_full),size = 2) +
+  geom_line(data =  all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in%
+                                                   c("ssSTACAS*","scANVI*","Unintegrated") &
+                                                   all.task.scores.kept.methods$Scaling == "unscaled",],
+       aes(x=task,y=Bio.conservation,color = Method,group = method_full)) + 
+  scale_color_manual(values=palette) + 
+  scale_shape_manual(values = 17) +
+  theme_minimal()
+
+p_bio
+```
+# Boxplot for Batch.Correction scores
+All methods present in figure 3 ABCD), scaled/unscaled.
+ssSTACAS\*_embed_unscaled, scANVI\*_embed_unscaled are highlighted.
+
+```{r}
+p_batch <- ggplot() + geom_boxplot(data = all.task.scores.kept.methods,
+                                   aes(x=task,y=Batch.Correction),inherit.aes = F) +
+  geom_point(data = all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in%
+                                                   c("ssSTACAS*","scANVI*","Unintegrated") &
+                                                   all.task.scores.kept.methods$Scaling == "unscaled",],
+       aes(x=task,y=Batch.Correction,color = Method,group = method_full),size = 2) +
+  geom_line(data =  all.task.scores.kept.methods[all.task.scores.kept.methods$Method %in%
+                                                   c("ssSTACAS*","scANVI*","Unintegrated") &
+                                                   all.task.scores.kept.methods$Scaling == "unscaled",],
+       aes(x=task,y=Batch.Correction,color = Method,group = method_full)) + 
+  scale_color_manual(values=palette) + 
+  scale_shape_manual(values = 17) +
+  theme_minimal()
+
+p_batch
+```
+
+```{r fig.width=12, fig.height=5}
+library(patchwork)
+
+(p_overall | p_batch | p_bio) & theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("pdf/scANVI_vs_STACAS_boxplots.pdf", height=4, width=9)
+```
+
+# All Bio.conservation metrics for the pancreas task
+```{r fig.width=8}
+library(patchwork)
+Bio.conservation.metrics <- c("NMI.cluster.label",
+                              "ARI.cluster.label",
+                              "isolated.label.F1",
+                              "isolated.label.silhouette",
+                              "graph.cLISI","
+                              CC.conservation")
+  
+pancreas.task <- all.task.scores.kept.methods[all.task.scores.kept.methods$task == "human_pancreas",]
+
+pll <- lapply(Bio.conservation.metrics, function(m) {
+  ggplot() + geom_boxplot(data = pancreas.task,  aes_string(x="task",y=m),inherit.aes = F) +
+  geom_point(data = pancreas.task[pancreas.task$Method %in%
+                                    c("ssSTACAS*","scANVI*","Unintegrated") &
+                                    pancreas.task$Scaling == "unscaled",],
+       aes_string(x="task",y=m,color = "Method",group = "method_full"),size = 3) +
+  scale_color_manual(values=palette) + 
+  scale_shape_manual(values = 17) + ylim(c(0,1)) +
+  theme_minimal()
+})
+wrap_plots(pll)
+```
+scANVI* performs particularly bad for CC.conservation (lower than unintegrated approach). Also visible in the [ranking plot for pancreas task](unknown_15_shuffled_20/oriMetrics/singleTask/20230705_131027_human_pancreas_summary_metrics.pdf).
+
+#Other benchmark
+
+##Results in CiLISI vs ASW
+ssSTACAS* is better than scANVI* for both metrics in Pancreas, Lung and Immune tasks (50 components, figures 3 ABC in manuscript).
+ssSTACAS* is better for ASW than scANVI* but a little bit lower for CiLISI than scANVI* in T cells tasks (manuscript figure 3 D). 
+ssSTACAS* is better than scANVI* for overall score in all tasks with 30 and 50 components (figures S2 B and D in manuscript)
+
+##Results in overall score for original metrics with 30 components
+Results shown in manuscript fig S2
+ssSTACAS* (final rank 1) is better than scANVI* in Pancreas and Immune task.
+scANVI* (final rank 2) is better than ssSTACAS* in Lung and T cells.
+
+
+
