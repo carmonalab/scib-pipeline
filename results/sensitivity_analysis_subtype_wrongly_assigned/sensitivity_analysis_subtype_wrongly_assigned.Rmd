@@ -278,10 +278,22 @@ p1+p2+patchwork::plot_layout(ncol = 1)
 ## Checking introduced noise
 
 ```{r}
-adata <- read_h5ad("../../input/immune_cell_hum_subtype_wrongly_assigned.h5ad")
+adata.files <- c( "../../input//human_pancreas_subtype_wrongly_assigned.h5ad", 
+                 "../../input//immune_cell_hum_subtype_wrongly_assigned.h5ad",
+                 "../../input//lung_atlas_subtype_wrongly_assigned.h5ad",
+                 "../../input//tcells_atlas_subtype_wrongly_assigned.h5ad")
 
+label.keys <- c( "celltype", 
+                 "final_annotation",
+                 "cell_type",
+                 "celltype")
+names(label.keys) <- adata.files
 
-table(adata$obs$final_annotation,adata$obs$CD8pos_T_cells_with_CD4pos_T_cells_final_annotation)
-table(adata$obs$final_annotation,adata$obs$CD8pos_T_cells_with_CD4pos_T_cells_final_annotation)
+for (files in adata.files) {
+  adata <- read_h5ad(files)
+  print(table(adata$obs[,paste0("neighbor_shuffled_20_unknown_15_",label.keys[files])] == "unknown")/nrow(adata))
+  print(table(adata$obs[,paste0("neighbor_shuffled_20_unknown_15_",label.keys[files])] != "unknown" & 
+          as.vector(adata$obs[,paste0("neighbor_shuffled_20_unknown_15_",label.keys[files])]) !=  adata$obs[,label.keys[files]])/nrow(adata))
+}
 
 ```
