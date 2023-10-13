@@ -1,0 +1,109 @@
+ROOT: sensitivity_analysis_subtype_wrongly_assigned_50_comp
+r_env : scib-R4.1
+py_env : scib-pipeline-R4.1
+dims: 50
+unintegrated_metrics: false
+
+INPUT_ANNOTATIONS:
+  - original
+  - neighbor_shuffled_20_unknown_15
+  # - closest_1
+  # - closest_2
+  # - closest_3
+  # - closest_4
+  # - closest_5
+  # - closest_6
+  # - closest_7
+  # - closest_8
+  # - closest_9
+  # - closest_10
+  # - closest_11
+  # - closest_12
+  # - closest_13
+  # - closest_14
+  # - closest_15
+  # - closest_16
+  # - closest_17
+  # - closest_18
+  # - closest_19
+  # - closest_20
+  - merging_1
+  - merging_2
+  - merging_3
+  - merging_4
+  - merging_5
+  - merging_6
+  - merging_7
+  - merging_8
+  - merging_9
+  - merging_10
+  - merging_11
+  - merging_12
+  - merging_13
+  - merging_14
+  - merging_15
+  - merging_16
+  - merging_17
+
+
+FEATURE_SELECTION:
+  hvg: 2000
+  #full_feature: 0
+
+SCALING:
+  - unscaled
+  - scaled
+
+METHODS:
+  scanvi:
+    output_type: embed
+    no_scale: true
+    use_celltype: true
+  scgen:
+    output_type: full
+    use_celltype: true
+  semiSupSTACAS:
+    R: true
+    use_celltype: true
+    output_type:
+      - embed
+
+
+
+DATA_SCENARIOS:
+
+  immune_cell_hum_subtype_wrongly_assigned:
+    batch_key: batch
+    label_key: final_annotation
+    organism: human
+    assay: expression
+    file: "input/immune_cell_hum_subtype_wrongly_assigned.h5ad"
+    #file: data/Immune_ALL_human_with_fine_and_broad_annotations.h5ad
+    #url: "https://drive.switch.ch/index.php/s/6mnRIheN1rmvYRo/download"
+    #url: https://figshare.com/ndownloader/files/25717166 original without broad annotations
+    
+  human_pancreas_subtype_wrongly_assigned:
+    batch_key: tech
+    label_key: celltype
+    organism: human
+    assay: expression
+    file: "input/human_pancreas_subtype_wrongly_assigned.h5ad"
+
+    
+  tcells_atlas_subtype_wrongly_assigned:
+    batch_key: Study
+    label_key: celltype
+    organism: mouse
+    assay: expression
+    file: "input/tcells_atlas_subtype_wrongly_assigned.h5ad"
+
+
+  lung_atlas_subtype_wrongly_assigned:
+    batch_key: batch
+    label_key: cell_type
+    organism: human
+    assay: expression
+    file: "input/lung_atlas_subtype_wrongly_assigned.h5ad"
+
+
+     
