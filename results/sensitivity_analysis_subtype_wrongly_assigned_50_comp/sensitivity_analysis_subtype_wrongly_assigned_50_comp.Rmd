@@ -73,11 +73,11 @@ First we copy them in the current directory (these file are already provided her
 
 ```{r}
 if (!file.exists("./metrics_R.csv")) {
-  file.copy("../../sensitivity_analysis_subtype_wrongly_assigned//metrics_R.csv","./")
+  file.copy("../../sensitivity_analysis_subtype_wrongly_assigned_50_comp/metrics_R.csv","./")
 }
 
 if (!file.exists("./metrics.csv")) {
-  file.copy("../../sensitivity_analysis_subtype_wrongly_assigned/metrics.csv","./")
+  file.copy("../../sensitivity_analysis_subtype_wrongly_assigned_50_comp/metrics.csv","./")
 }
 
 ```
@@ -101,7 +101,7 @@ metricsR$method <- str_split_fixed(metricsR$method,pattern = "/",n=2)[,2]
 metricsR$output <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,2]
 metricsR$tool <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,1]
 
-metricsR_previous <- read.csv("../final_benchmark//metrics_R.csv",row.names = 1)
+metricsR_previous <- read.csv("../final_benchmark_50_comp//metrics_R.csv",row.names = 1)
 
 #update task name to match current analysis
 rownames(metricsR_previous) <- gsub(rownames(metricsR_previous) ,pattern = "human_pancreas",replacement = "human_pancreas_subtype_wrongly_assigned")
@@ -155,7 +155,7 @@ metrics <- cbind(scenarios,metrics)
 metrics$output <- str_split_fixed(metrics$method,pattern = "_",n=2)[,2]
 metrics$tool <- str_split_fixed(metrics$method,pattern = "_",n=2)[,1]
 
-metrics_previous <- read.csv("../final_benchmark/metrics.csv",row.names = 1)
+metrics_previous <- read.csv("../final_benchmark_50_comp/metrics.csv",row.names = 1)
 
 #update task name to match current analysis
 rownames(metrics_previous) <- gsub(rownames(metrics_previous) ,pattern = "human_pancreas",replacement = "human_pancreas_subtype_wrongly_assigned")
