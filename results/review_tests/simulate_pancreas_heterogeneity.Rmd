@@ -1,5 +1,5 @@
 ---
-title: "Benchmark of all integration tools with noise for the supervised integration"
+title: "Benchmark of all integration tools with increasing heterogeneity"
 author: "Leonard Herault"
 date: '2022-12-09'
 output: html_document
@@ -9,9 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Evaluate performance on multiple versions of the Pancreas dataset, where an increasing number of subtypes is removed from the dataset. Specifically, Pancreas_rmX identify datasets where X subtypes were removed randomly from each batch (with X between 0 and 7); simulating increasing levels of heterogeneity across batches.
+
 ## Libraries
 
-```{r cars}
+```{r}
 library(ggplot2)
 library(Seurat)
 library(ggrepel)
@@ -25,8 +27,10 @@ library(dynutils)
 library(stringr)
 library(Hmisc)
 library(plyr)
+library(ggimage)
 # library(scIntegrationMetrics)
 library(anndata)
+library(R.utils)
 ```
 
 ```{r}
@@ -43,9 +47,7 @@ tasks <- c("Pancreas_rm0",
            "Pancreas_rm4",
            "Pancreas_rm5",
            "Pancreas_rm6",
-           "Pancreas_rm7",
-           "Pancreas_rm8",
-           "Pancreas_rm9")
+           "Pancreas_rm7")
 
 labels <- c("PancreasRm0",
            "PancreasRm1",
@@ -54,9 +56,7 @@ labels <- c("PancreasRm0",
            "PancreasRm4",
            "PancreasRm5",
            "PancreasRm6",
-           "PancreasRm7",
-           "PancreasRm8",
-           "PancreasRm9")
+           "PancreasRm7")
 ```
 
 
@@ -69,7 +69,7 @@ This report requires the files :
 generated with the snakemake pipeline using the config file `configs/original_annotations-R4.1.yaml`.
 First we copy them in the current directory (these file are already provided here in the repository)
 
-**To be noted that seurat_rpca broke for rm8 and rm9 (scaled and unscaled).**
+Note: Seurat_rPCA brakes for rm8 and rm9 - we evaluate performance up to rm7 **
 
 ```{r}
 if (!file.exists("./metrics_R.csv")) {
@@ -150,6 +150,8 @@ metrics$scalingF[metrics$scaling == "unscaled"] <- '-'
 ## CiLISI vs ASW_label
 
 ```{r fig.height=6, fig.width=12}
+library(ggrepel)
+library(Seurat)
 palette <-  c(RColorBrewer::brewer.pal(n=12, name="Paired"), RColorBrewer::brewer.pal(n=12, name="Set3"))
 #remove yellows
 palette <- palette[!palette %in% c("#FFFF99","#FFFFB3","#FFED6F")]
@@ -241,6 +243,8 @@ We discard gene matrix outputs (`"*_full"`) for R based methods (see `../../repo
 ### Only CiLISI and ASW_label
 
 ```{r}
+library(ggforce)
+
 metricsCiLISIlabelASW <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full") &
                                    metrics$noise == "unknown_15_shuffled_20",]
 metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label")]
@@ -455,7 +459,4 @@ plotBestMethodsRNA(
 plotSingleTaskRNA("original/oriMetrics/metrics.csv",outdir = "original/oriMetrics/singleTask")
 
 ```
-
-## Check noise introduce in the data
-
 
