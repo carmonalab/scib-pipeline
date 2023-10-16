@@ -35,28 +35,6 @@ library(anndata)
 
 source("../knit_table.R") 
 source("../R_fun_report.R")
-
-# tasks <- c("Pancreas_rm0",
-#            "Pancreas_rm1",
-#            "Pancreas_rm2",
-#            "Pancreas_rm3",
-#            "Pancreas_rm4",
-#            "Pancreas_rm5",
-#            "Pancreas_rm6",
-#            "Pancreas_rm7",
-#            "Pancreas_rm8",
-#            "Pancreas_rm9")
-# 
-# labels <- c("PancreasRm0",
-#            "PancreasRm1",
-#            "PancreasRm2",
-#            "PancreasRm3",
-#            "PancreasRm4",
-#            "PancreasRm5",
-#            "PancreasRm6",
-#            "PancreasRm7",
-#            "PancreasRm8",
-#            "PancreasRm9")
 ```
 
 
@@ -73,7 +51,7 @@ First we copy them in the current directory (these file are already provided her
 
 ```{r}
 if (!file.exists("./metrics_R.csv")) {
-  file.copy("../../sensitivity_analysis_subtype_wrongly_assigned//metrics_R.csv","./")
+  file.copy("../../sensitivity_analysis_subtype_wrongly_assigned/metrics_R.csv","./")
 }
 
 if (!file.exists("./metrics.csv")) {
@@ -225,9 +203,18 @@ metrics$task <- gsub(metrics$task,pattern = "_subtype_wrongly_assigned",replacem
 ```
 
 ```{r}
+palette <- c("#FF3333","#FF9999","#FFFF00","#996633","#FFCC66","#99CCCC")
+names(palette) <- c("semiSupSTACAS_embed","scanvi_embed","scgen_full","STACAS_embed","scvi_embed","unintegrated_full")
+shapes <- c(19,19,19,9,9,9)
+names(shapes) <- names(palette)
+
 metrics.shuffled.neighbors <- metrics[!startsWith(metrics$annotations,"merging"),  ]
 
-ggplot(metrics.shuffled.neighbors,aes(x=CiLISI,y=ASW_label_raw,color = method,shape = annotations)) + geom_point(size = 3) + facet_wrap("~task")
+ggplot(metrics.shuffled.neighbors,aes(x=CiLISI,y=ASW_label_raw,
+                                      color = method,shape = annotations)) + 
+  geom_point(size = 3) + facet_wrap("~task", scale="free") +
+  scale_color_manual(values=palette) +
+      theme_bw()
 ```
 
 
@@ -250,34 +237,55 @@ metrics.wrong.labelling <- metrics.wrong.labelling[!(metrics.wrong.labelling$tas
 ```
 
 
-```{r fig.width=8,fig.height=3}
+```{r fig.width=15,fig.height=8}
+library(patchwork)
+
 hclust.pancreas <- readRDS("../../sensitivity_analysis_subtype_wrongly_assigned/hclust_pancreas.rds")
 hclust.immune <- readRDS("../../sensitivity_analysis_subtype_wrongly_assigned/hclust_immune.rds")
 hclust.tcells <- readRDS("../../sensitivity_analysis_subtype_wrongly_assigned/hclust_tcells.rds")
 hclust.lung <- readRDS("../../sensitivity_analysis_subtype_wrongly_assigned/hclust_lung.rds")
 
-p1 <- ggplot(metrics.wrong.labelling,aes(y=ASW_label_raw,x=as.numeric(tree.node),group = method,color = method)) + geom_point() + geom_line() + facet_wrap("~task",scales = "free_x",nrow = 1) 
+p_asw <- ggplot(metrics.wrong.labelling,aes(y=ASW_label_raw,x=as.numeric(tree.node),
+                                         group = method,color = method)) +
+  geom_point(aes(shape=method)) + geom_line() +
+  facet_wrap("~task",scales = "free",nrow = 1) +
+  scale_color_manual(values=palette) +
+  scale_shape_manual(values=shapes) +
+  theme_bw()
 
 
-p2 <- cowplot::plot_grid(hclust.pancreas,hclust.immune,hclust.lung,hclust.tcells,nrow = 1)
+p_tree <- wrap_plots(hclust.pancreas, hclust.immune,hclust.lung, hclust.tcells, nrow = 1)
 
-p1+p2+patchwork::plot_layout(ncol = 1)
+p_asw + p_tree +patchwork::plot_layout(ncol = 1)
 ```
-```{r fig.width=8,fig.height=3}
+```{r fig.width=13,fig.height=9}
+library(patchwork)
+pdir <- "pdf"
 
-p1 <- ggplot(metrics.wrong.labelling,aes(y=CiLISI,x=as.numeric(tree.node),group = method,color = method)) + geom_point() + geom_line() + facet_wrap("~task",scales = "free_x",nrow = 1) 
+hclust.pancreas <- readRDS("../../sensitivity_analysis_subtype_wrongly_assigned/hclust_pancreas.rds")
+hclust.immune <- readRDS("../../sensitivity_analysis_subtype_wrongly_assigned/hclust_immune.rds")
+hclust.tcells <- readRDS("../../sensitivity_analysis_subtype_wrongly_assigned/hclust_tcells.rds")
+hclust.lung <- readRDS("../../sensitivity_analysis_subtype_wrongly_assigned/hclust_lung.rds")
+
+p_clisi <- ggplot(metrics.wrong.labelling,aes(y=CiLISI,x=as.numeric(tree.node),
+                                         group = method,color = method)) +
+  geom_point(aes(shape=method)) + geom_line() +
+  facet_wrap("~task",scales = "free",nrow = 1) +
+  scale_color_manual(values=palette) +
+  scale_shape_manual(values=shapes) +
+  theme_bw()
 
 
-p2 <- cowplot::plot_grid(hclust.pancreas,hclust.immune,hclust.lung,hclust.tcells,nrow = 1)
+p_asw + p_clisi + p_tree + patchwork::plot_layout(ncol = 1)
 
-p1+p2+patchwork::plot_layout(ncol = 1)
+ggsave(sprintf("%s/broad_annotation.pdf", pdir), height=8, width=12)
 ```
 
 
 
 ## Checking introduced noise
 
-```{r}
+```{r eval=F}
 adata.files <- c( "../../input//human_pancreas_subtype_wrongly_assigned.h5ad", 
                  "../../input//immune_cell_hum_subtype_wrongly_assigned.h5ad",
                  "../../input//lung_atlas_subtype_wrongly_assigned.h5ad",

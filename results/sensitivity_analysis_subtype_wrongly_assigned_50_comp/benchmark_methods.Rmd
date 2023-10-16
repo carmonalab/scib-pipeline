@@ -1,0 +1,346 @@
+---
+title: "Benchmark of all integration tools with noise for the supervised integration"
+author: "Leonard Herault"
+date: '2022-12-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+
+```{r cars}
+library(ggplot2)
+library(Seurat)
+library(ggrepel)
+```
+
+
+```{r}
+library(tibble)
+library(RColorBrewer)
+library(dynutils)
+library(stringr)
+library(Hmisc)
+library(plyr)
+# library(scIntegrationMetrics)
+library(anndata)
+```
+
+```{r}
+#Move to directory of this script
+#setwd("./results/final_benchmark")
+
+source("../knit_table.R") 
+source("../R_fun_report.R")
+```
+
+
+
+This report requires the files :
+
+-   `../../sensitivity_analysis_subtype_wrongly_assigned_50_comp/metrics_R.csv`
+-   `../../sensitivity_analysis_subtype_wrongly_assigned_50_comp/metrics.csv`
+
+generated with the snakemake pipeline using the config file `configs/original_annotations-R4.1.yaml`.
+First we copy them in the current directory (these file are already provided here in the repository)
+
+**To be noted that seurat_rpca broke for rm8 and rm9 (scaled and unscaled).**
+
+```{r}
+if (!file.exists("./metrics_R.csv")) {
+  file.copy("../../sensitivity_analysis_subtype_wrongly_assigned_50_comp/metrics_R.csv","./")
+}
+
+if (!file.exists("./metrics.csv")) {
+  file.copy("../../sensitivity_analysis_subtype_wrongly_assigned_50_comp/metrics.csv","./")
+}
+
+```
+
+
+
+
+
+
+```{r}
+metricsR <- read.csv("metrics_R.csv",row.names = 1)
+
+scenarios <- str_split_fixed(rownames(metricsR),pattern = "/",n=7)
+#head(scenarios)
+
+scenarios <- scenarios[,-1]
+colnames(scenarios) <- c("task","annotations","folder","scaling","features","method")
+rownames(scenarios) <- rownames(metricsR)
+
+scenarios <- as.data.frame(scenarios)
+
+scenarios$task <- gsub(scenarios$task,
+                       pattern = "_subtype_wrongly_assigned",
+                       replacement="")
+
+keptIndex <- which(scenarios$method %in% c("R/scgen_full","R/semiSupSTACAS_embed","R/scanvi_embed") &
+                        scenarios$annotations == "neighbor_shuffled_20_unknown_15")
+
+metricsR <- cbind(scenarios,metricsR)
+metricsR <- metricsR[keptIndex,]
+
+metricsR$method <- str_split_fixed(metricsR$method,pattern = "/",n=2)[,2]
+metricsR$output <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,2]
+metricsR$tool <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,1]
+```
+
+```{r}
+metricsR_previous <- read.csv("../final_benchmark_50_comp//metrics_R.csv",row.names = 1)
+
+scenarios_previous <- str_split_fixed(rownames(metricsR_previous),pattern = "/",n=7)
+#head(scenarios_previous)
+
+scenarios_previous <- as.data.frame(scenarios_previous[,-1])
+
+colnames(scenarios_previous) <- c("task","annotations","folder","scaling","features","method")
+rownames(scenarios_previous) <- rownames(metricsR_previous)
+
+scenarios_previous$method <- str_split_fixed(scenarios_previous$method,pattern = "/",n=2)[,2]
+
+
+keptIndex <- which(!scenarios_previous$method %in% c("scgen_full","semiSupSTACAS_embed","scanvi_embed") &
+                        scenarios_previous$annotations == "unknown_15_shuffled_20")
+
+
+metricsR_previous <- cbind(scenarios_previous, metricsR_previous)
+metricsR_previous <- metricsR_previous[keptIndex,]
+
+metricsR_previous$output <- str_split_fixed(metricsR_previous$method,pattern = "_",n=2)[,2]
+metricsR_previous$tool <- str_split_fixed(metricsR_previous$method,pattern = "_",n=2)[,1]
+
+
+metricsR <- rbind(metricsR,metricsR_previous[,colnames(metricsR)])
+```
+
+
+
+```{r}
+metrics <- read.csv("metrics.csv",row.names = 1)
+
+scenarios <- str_split_fixed(rownames(metrics),pattern = "/",n=7)
+#head(scenarios)
+
+scenarios <- as.data.frame(scenarios[,-1])
+colnames(scenarios) <- c("task","annotations","folder","scaling","features","method")
+rownames(scenarios) <- rownames(metrics)
+
+scenarios$task <- gsub(scenarios$task,
+                       pattern = "_subtype_wrongly_assigned",
+                       replacement="")
+  
+metrics <- cbind(scenarios,metrics)
+
+keptIndex <- which(scenarios$method %in% c("scgen_full","semiSupSTACAS_embed","scanvi_embed") &
+                        scenarios$annotations == "neighbor_shuffled_20_unknown_15")
+
+metrics <- cbind(scenarios,metrics)
+metrics <- metrics[keptIndex,]
+
+#metrics$method <- str_split_fixed(metrics$method,pattern = "/",n=2)[,2]
+metrics$output <- str_split_fixed(metrics$method,pattern = "_",n=2)[,2]
+metrics$tool <- str_split_fixed(metrics$method,pattern = "_",n=2)[,1]
+```
+
+```{r}
+metrics_previous <- read.csv("../final_benchmark_50_comp/metrics.csv",row.names = 1)
+
+scenarios_previous <- str_split_fixed(rownames(metrics_previous),pattern = "/",n=7)
+#head(scenarios_previous)
+
+scenarios_previous <- data.frame(scenarios_previous[,-1])
+
+colnames(scenarios_previous) <- c("task","annotations","folder","scaling","features","method")
+rownames(scenarios_previous) <- rownames(metrics_previous)
+
+
+keptIndex <- which(!scenarios_previous$method %in% c("scgen_full","semiSupSTACAS_embed","scanvi_embed") &
+                        scenarios_previous$annotations == "unknown_15_shuffled_20")
+
+
+metrics_previous <- cbind(scenarios_previous, metrics_previous)
+metrics_previous <- metrics_previous[keptIndex,]
+
+metrics_previous$output <- str_split_fixed(metrics_previous$method,pattern = "_",n=2)[,2]
+metrics_previous$tool <- str_split_fixed(metrics_previous$method,pattern = "_",n=2)[,1]
+
+cols <- intersect(colnames(metrics), colnames(metrics_previous))
+metrics <- rbind(metrics[, cols], metrics_previous[,cols])
+```
+
+
+```{r}
+rownames(metricsR) <- gsub(rownames(metricsR),pattern = "/R/",replacement = "/")
+
+rn <- intersect(rownames(metrics), rownames(metricsR))
+
+metrics <- cbind(metrics[rn,], metricsR[rn, c("CiLISI","CiLISI_means")])
+
+metrics$ASW_label_raw <- 2*metrics$ASW_label-1
+```
+
+Formatting names for plotting
+```{r}
+metrics$methodLong <- paste(metrics$method,metrics$scaling,sep = "_")
+
+#Names for plotting
+metrics$toolF <- metrics$tool
+metrics$toolF[metrics$tool == "unintegrated"] <- "Unintegrated"
+metrics$toolF[metrics$tool == "combat"] <- "ComBat"
+metrics$toolF[metrics$tool == "scanorama"] <- "Scanorama"
+metrics$toolF[metrics$tool == "scanvi"] <- "scANVI"
+metrics$toolF[metrics$tool == "scvi"] <- "scVI"
+metrics$toolF[metrics$tool == "scgen"] <- "scGen"
+metrics$toolF[metrics$tool == "fastmnn"] <- "FastMNN"
+metrics$toolF[metrics$tool == "harmony"] <- "Harmony"
+metrics$toolF[metrics$tool == "seurat"] <- "SeuratCCA"
+metrics$toolF[metrics$tool == "seuratrpca"] <- "SeuratRPCA"
+metrics$toolF[metrics$tool == "semiSupSTACAS"] <- "ssSTACAS"
+
+metrics$scalingF <- metrics$scaling
+metrics$scalingF[metrics$scaling == "scaled"] <- '+'
+metrics$scalingF[metrics$scaling == "unscaled"] <- '-'
+```
+
+## CiLISI vs ASW_label
+
+```{r fig.height=10, fig.width=12}
+#palette <-  c(RColorBrewer::brewer.pal(n=12, name="Paired"), RColorBrewer::brewer.pal(n=12, name="Set3"))
+
+palette <- c("#E31A1C", "#B15928", "#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99",  
+"#FDBF6F", "#eaee02", "#CAB2D6", "#6A3D9A",  "#8DD3C7")
+
+names(palette) <- c( "ssSTACAS", "STACAS", "ComBat", "FastMNN", "Harmony", 
+"Scanorama", "scANVI", "scVI", "scGen", "SeuratCCA", "SeuratRPCA",  "Unintegrated")
+
+metrics$toolF <- factor(metrics$toolF, levels=names(palette))
+
+dir.create("pdf/CiLISI_vs_ASW_label",recursive = T)
+
+methodToCompare <- c("STACAS_embed_unscaled","STACAS_embed_scaled",
+                     "semiSupSTACAS_embed_unscaled","semiSupSTACAS_embed_scaled",
+                     "seuratrpca_embed_unscaled","seuratrpca_embed_scaled",
+                     "seurat_embed_unscaled","seurat_embed_scaled",
+                     "fastmnn_embed_scaled","fastmnn_embed_unscaled",
+                     "harmony_embed_unscaled","harmony_embed_scaled",
+                     "scvi_embed_unscaled", "scvi_embed_scaled",
+                     "scanorama_embed_scaled","scanorama_embed_unscaled",
+                     "scanvi_embed_unscaled", "scanvi_embed_scaled",
+                     "combat_full_scaled","combat_full_unscaled",
+                     "scgen_full_scaled","scgen_full_unscaled",
+                     "unintegrated_full_unscaled"
+)
+
+pll <- list()
+for (t in unique(metrics$task)) {
+
+    metricsSub <- metrics[metrics$task == t,]
+    p <- ggplot(metricsSub[metricsSub$methodLong %in% methodToCompare,],
+                aes(x = CiLISI,color=toolF,y=ASW_label_raw,shape= scaling)) + 
+      geom_point(size=4) + facet_wrap(c("task"),scales = "free",ncol = 2) +
+      geom_label_repel(aes(label = paste0(toolF,scalingF)),
+                       box.padding   = 0.1,
+                       label.padding = 0.1,
+                       point.padding = 0.2,
+                       size = 2.5,
+                       segment.color = 'grey50') +
+      scale_color_manual(values=palette) +
+      theme_bw() + NoLegend() 
+    
+    pll[[t]] <- p
+    fname <- paste0("pdf/CiLISI_vs_ASW_label/",t,"_scatter.pdf") 
+    ggsave(fname, plot=p, width=4, height=4)
+    
+}
+wrap_plots(pll)
+```
+
+Version without scatterplot labels
+```{r fig.height=8, fig.width=12}
+dir.create("pdf/CiLISI_vs_ASW_nolab",recursive = T)
+
+methodToCompare <- c("STACAS_embed_unscaled","STACAS_embed_scaled",
+                     "semiSupSTACAS_embed_unscaled","semiSupSTACAS_embed_scaled",
+                     "seuratrpca_embed_unscaled","seuratrpca_embed_scaled",
+                     "seurat_embed_unscaled","seurat_embed_scaled",
+                     "fastmnn_embed_scaled","fastmnn_embed_unscaled",
+                     "harmony_embed_unscaled","harmony_embed_scaled",
+                     "scvi_embed_unscaled", "scvi_embed_scaled",
+                     "scanorama_embed_scaled","scanorama_embed_unscaled",
+                     "scanvi_embed_unscaled", "scanvi_embed_scaled",
+                     "combat_full_scaled","combat_full_unscaled",
+                     "scgen_full_scaled","scgen_full_unscaled",
+                     "unintegrated_full_unscaled"
+)
+
+pll <- list()
+for (t in unique(metrics$task)) {
+    metricsSub <- metrics[metrics$task == t,]
+    p <- ggplot(metricsSub[metricsSub$methodLong %in% methodToCompare,],
+                aes(x = CiLISI,color=toolF,y=ASW_label_raw,shape= scaling)) + 
+      geom_point(size=4) + facet_wrap(c("task"),scales = "free",ncol = 2) +
+      scale_color_manual(values=palette) +
+      theme_bw()
+    
+    pll[[t]] <- p
+    fname <- paste0("pdf/CiLISI_vs_ASW_nolab/",t,"_scatter.pdf") 
+     ggsave(fname, plot=p, width=5.5, height=4)
+    
+}
+wrap_plots(pll[c(2,1,4,3)])
+```
+
+```{r}
+library(ggforce)
+
+metricsCiLISIlabelASW <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full"),]
+metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label")]
+
+
+# remove noise info in rowname to directly use luecken function
+rownames(metricsCiLISIlabelASW) <- gsub(rownames(metricsCiLISIlabelASW),
+                                        pattern = "/unknown_15_shuffled_20/", replacement = "/")
+
+dir.create("unknown_15_shuffled_20/CiLISIlabelASW/singleTask",recursive = T)
+dir.create("unknown_15_shuffled_20/CiLISIlabelASW/best")
+
+write.csv(metricsCiLISIlabelASW,"unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",col.names = T)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",
+  outdir = "unknown_15_shuffled_20/CiLISIlabelASW/",
+  ids_RNA = c("human_pancreas_subtype_wrongly_assigned",
+              "immune_cell_hum_subtype_wrongly_assigned",
+              "lung_atlas_subtype_wrongly_assigned",
+              "tcells_atlas_subtype_wrongly_assigned"),
+  labels_RNA = c("Pancreas","Immune","Lung","Tcells"),
+  weight_batch = 0.4,
+  keepBest = F, keepBestOutput = F
+)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",
+  outdir = "unknown_15_shuffled_20/CiLISIlabelASW/best",
+  ids_RNA = c("human_pancreas_subtype_wrongly_assigned",
+              "immune_cell_hum_subtype_wrongly_assigned",
+              "lung_atlas_subtype_wrongly_assigned",
+              "tcells_atlas_subtype_wrongly_assigned"),
+  labels_RNA = c("Pancreas","Immune","Lung","Tcells"),
+  weight_batch = 0.4,
+  keepBest = T, keepBestOutput = T
+)
+
+
+plotSingleTaskRNA("unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",
+                  outdir = "unknown_15_shuffled_20/CiLISIlabelASW/singleTask")
+
+```
