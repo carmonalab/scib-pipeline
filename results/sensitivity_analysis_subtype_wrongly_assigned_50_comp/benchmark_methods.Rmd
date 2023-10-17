@@ -304,9 +304,16 @@ metricsCiLISIlabelASW <- metrics[!metrics$method %in% c("seuratrpca_full","semiS
 metricsCiLISIlabelASW <- metricsCiLISIlabelASW[,c("CiLISI","ASW_label")]
 
 
+
+#rownames(metricsCiLISIlabelASW) <- gsub("^/", replacement = "", x = rownames(metricsCiLISIlabelASW), perl=T)
+
 # remove noise info in rowname to directly use luecken function
-rownames(metricsCiLISIlabelASW) <- gsub(rownames(metricsCiLISIlabelASW),
-                                        pattern = "/unknown_15_shuffled_20/", replacement = "/")
+rownames(metricsCiLISIlabelASW) <- gsub(rownames(metricsCiLISIlabelASW), perl=T,
+                                        pattern = '/neighbor_shuffled_20_unknown_15|unknown_15_shuffled_20/', replacement = "")
+
+rownames(metricsCiLISIlabelASW) <- gsub(rownames(metricsCiLISIlabelASW), perl=T,
+                                        pattern = '_subtype_wrongly_assigned', replacement = "")
+
 
 dir.create("unknown_15_shuffled_20/CiLISIlabelASW/singleTask",recursive = T)
 dir.create("unknown_15_shuffled_20/CiLISIlabelASW/best")
@@ -344,3 +351,60 @@ plotSingleTaskRNA("unknown_15_shuffled_20/CiLISIlabelASW/metrics.csv",
                   outdir = "unknown_15_shuffled_20/CiLISIlabelASW/singleTask")
 
 ```
+All metrics
+```{r}
+library(ggforce)
+oriMetrics <- colnames(read.csv("metrics.csv",row.names = 1))
+oriMetrics <- oriMetrics[!oriMetrics %in% c("hvg_overlap","trajectory")]
+
+metrics_or <- metrics[!metrics$method %in% c("seuratrpca_full","semiSupSTACAS_full","STACAS_full","seurat_full","fastmnn_full"),]
+metrics_or <- metrics_or[,oriMetrics]
+
+
+
+# remove noise info in rowname to directly use luecken function
+rownames(metrics_or) <- gsub(rownames(metrics_or), perl=T,
+                                        pattern = '/neighbor_shuffled_20_unknown_15|unknown_15_shuffled_20/', replacement = "")
+
+rownames(metrics_or) <- gsub(rownames(metrics_or), perl=T,
+                                        pattern = '_subtype_wrongly_assigned', replacement = "")
+
+
+dir.create("unknown_15_shuffled_20/orimetrics/singleTask",recursive = T)
+dir.create("unknown_15_shuffled_20/orimetrics/best")
+
+write.csv(metrics_or,"unknown_15_shuffled_20/orimetrics/metrics.csv",col.names = T)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "unknown_15_shuffled_20/orimetrics/metrics.csv",
+  outdir = "unknown_15_shuffled_20/orimetrics/",
+  ids_RNA = c("human_pancreas_subtype_wrongly_assigned",
+              "immune_cell_hum_subtype_wrongly_assigned",
+              "lung_atlas_subtype_wrongly_assigned",
+              "tcells_atlas_subtype_wrongly_assigned"),
+  labels_RNA = c("Pancreas","Immune","Lung","Tcells"),
+  weight_batch = 0.4,
+  keepBest = F, keepBestOutput = F
+)
+
+
+plotBestMethodsRNA(
+  csv_metrics_path = "unknown_15_shuffled_20/orimetrics/metrics.csv",
+  outdir = "unknown_15_shuffled_20/orimetrics/best",
+  ids_RNA = c("human_pancreas_subtype_wrongly_assigned",
+              "immune_cell_hum_subtype_wrongly_assigned",
+              "lung_atlas_subtype_wrongly_assigned",
+              "tcells_atlas_subtype_wrongly_assigned"),
+  labels_RNA = c("Pancreas","Immune","Lung","Tcells"),
+  weight_batch = 0.4,
+  keepBest = T, keepBestOutput = T
+)
+
+
+plotSingleTaskRNA("unknown_15_shuffled_20/orimetrics/metrics.csv",
+                  outdir = "unknown_15_shuffled_20/orimetrics/singleTask")
+
+```
+
+
