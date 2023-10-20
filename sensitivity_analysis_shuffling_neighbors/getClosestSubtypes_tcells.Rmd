@@ -1,0 +1,53 @@
+```{r}
+library(anndata)
+library(Seurat)
+```
+```{r}
+adata <- read_h5ad("../input/tcells_atlas.h5ad")
+
+adata
+```
+
+```{r}
+seurat.obj <- CreateSeuratObject(meta.data = adata$obs[,-c(3)],counts = Matrix::t(adata$layers['counts'])) # problem with nFeature_RNA column we don't need
+seurat.obj <- AggregateExpression(seurat.obj,group.by = "celltype",slot = "counts",return.seurat = T)
+seurat.obj <- NormalizeData(seurat.obj)
+
+distances <- dist(as.matrix(Matrix::t(seurat.obj@assays$RNA@data)))
+
+library(reshape2)
+
+distances.df <- melt(as.matrix(distances), varnames = c("row", "col"))
+
+distances.df
+```
+## Plot distance matrix
+```{r}
+distances.df$distance <- distances.df$value
+distances.df$distance[distances.df$distance == 0] <- NA
+
+ggplot(distances.df, aes(row, col, fill= distance)) + 
+  geom_tile() + scale_fill_gradient2(low = scales::muted("red"),
+  mid = "white",midpoint = median(distances.df$distance,na.rm = T),
+  high = scales::muted("blue")) + scale_x_discrete(guide = guide_axis(angle=45)) + xlab("") + ylab("")
+```
+
+## Getting closest neighbors
+```{r}
+library(ggplot2)
+getClosestSubtype <- function(distances) {
+  res <- as.character(rownames(as.matrix(distances))[order(as.matrix(distances)[,1])[2]])
+  return(res)
+}
+
+
+
+closestSubtypes <- apply(data.frame(as.matrix(distances)),MARGIN = 2,FUN = getClosestSubtype)
+names(closestSubtypes) <- rownames(as.matrix(distances))
+
+closestSubtypes
+
+write.csv(data.frame(closestSubtypes),"../configs/closest_subtypes_tcells.csv")
+```
+
+
