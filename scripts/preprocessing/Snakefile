@@ -18,6 +18,7 @@ rule integration_prepare:
         scale     = lambda wildcards: "-s" if wildcards.scaling == "scaled" else "",
         rout      = lambda wildcards: "-r" if wildcards.prep == "RDS" else "",
         seurat    = lambda wildcards: "-l" if wildcards.prep == "RDS" else "",
+        shuffling_guide =  lambda wildcards: "-g "+ cfg.get_from_scenario(wildcards.scenario, key="shuffling_guide") if any("shuffledWithGuide" in i for i in cfg.get_all_input_annotations()) else "",
         env       = f"conda run -n {cfg.py_env}"
     benchmark:
         str(cfg.ROOT / "{scenario}/prepare/{scaling}/{hvg}/prep_{prep}.benchmark")
@@ -27,5 +28,5 @@ rule integration_prepare:
         {params.env} python scripts/preprocessing/runPP.py -i {input.adata} \
         -o {output} -b {params.batch_key} -t {params.label_key} \
         -a {params.input_annotations} \
-        --hvgs {params.hvgs} {params.scale} {params.rout} {params.seurat}
+        --hvgs {params.hvgs} {params.scale} {params.rout} {params.seurat} {params.shuffling_guide}
         """

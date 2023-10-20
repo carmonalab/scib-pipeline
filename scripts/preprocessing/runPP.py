@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import scanpy as sc
+import pandas as pd
 import scib
 import warnings
 
@@ -18,12 +19,29 @@ def shufflePortion(arr, percentage, leaveUnknown = True):
     if leaveUnknown:
         annoCellsIdx = np.where(x != "unknown")[0]
     else:
-        annoCellsIdx = x        
+        annoCellsIdx = np.array(range(arr.shape[0]))           
     
     shuf = np.random.choice(annoCellsIdx,  
                             round(arr.shape[0]*percentage/100), 
                             replace=False) 
+                            
     arr[np.sort(shuf)] = arr[shuf]
+    return arr
+  
+def sufflePortionWithGuide(arr, percentage, guide, leaveUnknown = True): 
+    guide = pd.read_csv(guide,index_col =0)
+    guide_dict = guide.to_dict()
+    guide_dict = guide_dict[list(guide_dict.keys())[0]]
+    x = np.array(arr)
+    if leaveUnknown:
+        annoCellsIdx = np.where(x != "unknown")[0]
+    else:
+        annoCellsIdx = np.array(range(arr.shape[0]))        
+    
+    shuf = np.random.choice(annoCellsIdx,  
+                            round(arr.shape[0]*percentage/100), 
+                            replace=False) 
+    arr[shuf] = [guide_dict[i] for i in arr[shuf]]
     return arr
   
 def unassignPortion(arr, percentage): 
@@ -37,7 +55,7 @@ def unassignPortion(arr, percentage):
 
 
 
-def runPP(inPath, outPath, hvg, batch, rout, scale, seurat, label, inputAnno):
+def runPP(inPath, outPath, hvg, batch, rout, scale, seurat, label, inputAnno,guide):
     """
     params:
         inPath: path of the anndata object
@@ -91,6 +109,11 @@ def runPP(inPath, outPath, hvg, batch, rout, scale, seurat, label, inputAnno):
             print("Suffling "+ str(shuffled) +"% of annotations")
             adata.obs["shuffled_"+str(shuffled)+"_"+ label] = adata.obs[label].copy()
             adata.obs["shuffled_"+str(shuffled)+"_"+ label] = shufflePortion(adata.obs["shuffled_"+str(shuffled)+"_"+ label].values, float(shuffled))
+        elif (i.startswith("shuffledWithGuide_")) & ("unknown" not in i):
+            shuffled = i.split("_")[1]
+            print("Suffling with guide "+ str(shuffled) +"% of annotations")
+            adata.obs["shuffledWithGuide_"+str(shuffled)+"_"+ label] = adata.obs[label].copy()
+            adata.obs["shuffledWithGuide_"+str(shuffled)+"_"+ label] = sufflePortionWithGuide(adata.obs["shuffledWithGuide_"+str(shuffled)+"_"+ label].values, float(shuffled), guide)
         elif (i.startswith("unknown_")) & ("shuffled_" in i):
             unknown = i.split("_")[1]
             shuffled = i.split("_")[3]
@@ -102,6 +125,17 @@ def runPP(inPath, outPath, hvg, batch, rout, scale, seurat, label, inputAnno):
             alteredAnnoCol = "unknown_"+str(unknown)+"_shuffled_"+str(shuffled)+"_"+ label
             adata.obs[alteredAnnoCol] = adata.obs["unknown_"+str(unknown)+"_"+ label].copy()
             adata.obs[alteredAnnoCol] = shufflePortion(adata.obs[alteredAnnoCol].values, float(shuffled))
+        elif (i.startswith("unknown_")) & ("shuffledWithGuide_" in i):
+            unknown = i.split("_")[1]
+            shuffled = i.split("_")[3]
+            print("Hiding "+ str(unknown) +"% of annotations and shuffling " + str(shuffled) + "% of remaining annotations with a guide")
+            adata.obs["unknown_"+str(unknown)+"_"+ label] = adata.obs[label].copy()
+            adata.obs["unknown_"+str(unknown)+"_"+ label] = adata.obs["unknown_"+str(unknown)+"_"+ label].cat.add_categories(['unknown'])
+            adata.obs["unknown_"+str(unknown)+"_"+ label] = unassignPortion(adata.obs["unknown_"+str(unknown)+"_"+ label].values, float(unknown))
+            #Shuffling
+            alteredAnnoCol = "unknown_"+str(unknown)+"_shuffledWithGuide_"+str(shuffled)+"_"+ label
+            adata.obs[alteredAnnoCol] = adata.obs["unknown_"+str(unknown)+"_"+ label].copy()
+            adata.obs[alteredAnnoCol] = sufflePortionWithGuide(adata.obs[alteredAnnoCol].values, float(shuffled),guide)
         else:
             otherAnno =  i+'_'+label
             if not any([j.startswith(i) for j in adata.obs.columns]):
@@ -131,6 +165,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--rout', help='Save output for R methods', action='store_true')
     parser.add_argument('-s', '--scale', action='store_true', help='Scale the data per batch')
     parser.add_argument('-a', '--input_annotations', help='all different annotations that will be use to guide supervised tools (separated by ,', default="original")
+    parser.add_argument('-g', '--guide', help='Path to csv table to guide the shuffling', default=None)
     parser.add_argument('-l', '--seurat', help='Generate output for seurat including hvg list', action='store_true')
 
     args = parser.parse_args()
@@ -143,5 +178,8 @@ if __name__ == '__main__':
     seurat = args.seurat
     scale = args.scale
     inputAnno = args.input_annotations.split(",")
+    guide = args.guide
+    
+    print(args)
 
-    runPP(file, out, hvg, batch, rout, scale, seurat,label,inputAnno)
+    runPP(file, out, hvg, batch, rout, scale, seurat,label,inputAnno,guide)
