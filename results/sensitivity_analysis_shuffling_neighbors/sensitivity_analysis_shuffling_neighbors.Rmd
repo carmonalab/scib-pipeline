@@ -1,0 +1,268 @@
+---
+title: "Benchmark of all integration tools with noise for the supervised integration"
+author: "Leonard Herault"
+date: '2022-12-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+
+```{r cars}
+library(ggplot2)
+library(Seurat)
+library(ggrepel)
+```
+
+
+```{r}
+library(tibble)
+library(RColorBrewer)
+library(dynutils)
+library(stringr)
+library(Hmisc)
+library(plyr)
+# library(scIntegrationMetrics)
+library(anndata)
+```
+
+```{r}
+#Move to directory of this script
+#setwd("./results/final_benchmark")
+
+source("../knit_table.R") 
+source("../R_fun_report.R")
+
+# tasks <- c("Pancreas_rm0",
+#            "Pancreas_rm1",
+#            "Pancreas_rm2",
+#            "Pancreas_rm3",
+#            "Pancreas_rm4",
+#            "Pancreas_rm5",
+#            "Pancreas_rm6",
+#            "Pancreas_rm7",
+#            "Pancreas_rm8",
+#            "Pancreas_rm9")
+# 
+# labels <- c("PancreasRm0",
+#            "PancreasRm1",
+#            "PancreasRm2",
+#            "PancreasRm3",
+#            "PancreasRm4",
+#            "PancreasRm5",
+#            "PancreasRm6",
+#            "PancreasRm7",
+#            "PancreasRm8",
+#            "PancreasRm9")
+```
+
+
+
+This report requires the files :
+
+-   `../../sensitivity_analysis_subtype_wrongly_assigned/metrics_R.csv`
+-   `../../sensitivity_analysis_subtype_wrongly_assigned/metrics.csv`
+
+generated with the snakemake pipeline using the config file `configs/original_annotations-R4.1.yaml`.
+First we copy them in the current directory (these file are already provided here in the repository)
+
+**To be noted that seurat_rpca broke for rm8 and rm9 (scaled and unscaled).**
+
+```{r}
+if (!file.exists("./metrics_R.csv")) {
+  file.copy("../../sensitivity_analysis_shuffling_neighbors/metrics_R.csv","./")
+}
+
+if (!file.exists("./metrics.csv")) {
+  file.copy("../../sensitivity_analysis_shuffling_neighbors/metrics.csv","./")
+}
+
+```
+
+
+
+
+
+
+```{r}
+metricsR <- read.csv("metrics_R.csv",row.names = 1)
+
+scenarios <- str_split_fixed(rownames(metricsR),pattern = "/",n=7)
+#head(scenarios)
+
+scenarios <- scenarios[,-1]
+colnames(scenarios) <- c("task","annotations","folder","scaling","features","method")
+metricsR <- cbind(scenarios,metricsR)
+
+metricsR$method <- str_split_fixed(metricsR$method,pattern = "/",n=2)[,2]
+metricsR$output <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,2]
+metricsR$tool <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,1]
+
+metricsR_previous <- read.csv("../final_benchmark//metrics_R.csv",row.names = 1)
+
+#update task name to match current analysis
+# rownames(metricsR_previous) <- gsub(rownames(metricsR_previous) ,pattern = "human_pancreas",replacement = "human_pancreas_subtype_wrongly_assigned")
+# 
+# rownames(metricsR_previous) <- gsub(rownames(metricsR_previous) ,pattern = "immune_cell_hum",replacement = "immune_cell_hum_subtype_wrongly_assigned")
+# 
+# rownames(metricsR_previous) <- gsub(rownames(metricsR_previous) ,pattern = "tcells_atlas",replacement = "tcells_atlas_subtype_wrongly_assigned")
+# 
+# rownames(metricsR_previous) <- gsub(rownames(metricsR_previous) ,pattern = "lung_atlas",replacement = "lung_atlas_subtype_wrongly_assigned")
+
+
+scenarios_previous <- str_split_fixed(rownames(metricsR_previous),pattern = "/",n=7)
+#head(scenarios_previous)
+
+scenarios_previous <- data.frame(scenarios_previous[,-1])
+
+colnames(scenarios_previous) <- c("task","annotations","folder","scaling","features","method")
+scenarios_previous$method <- str_split_fixed(scenarios_previous$method,pattern = "/",n=2)[,2]
+
+
+
+keptIndex <- which((scenarios_previous$scaling %in% c("unscaled") & scenarios_previous$task %in% c("immune_cell_hum","human_pancreas","tcells_atlas","lung_atlas")) &
+                     (scenarios_previous$method %in% c("scgen_full","semiSupSTACAS_embed","STACAS_embed","scanvi_embed","scvi_embed","unintegrated_full")&
+                        scenarios_previous$annotations == "unknown_15_shuffled_20"))
+
+rn <- rownames(metricsR_previous)[keptIndex]
+
+metricsR_previous <- cbind(scenarios_previous[keptIndex,],metricsR_previous[keptIndex,])
+rownames(metricsR_previous) <- rn
+
+metricsR_previous$output <- str_split_fixed(metricsR_previous$method,pattern = "_",n=2)[,2]
+metricsR_previous$tool <- str_split_fixed(metricsR_previous$method,pattern = "_",n=2)[,1]
+
+
+metricsR <- rbind(metricsR,metricsR_previous[,colnames(metricsR)])
+```
+
+
+
+```{r}
+metrics <- read.csv("metrics.csv",row.names = 1)
+
+scenarios <- str_split_fixed(rownames(metrics),pattern = "/",n=7)
+#head(scenarios)
+
+scenarios <- scenarios[,-1]
+colnames(scenarios) <- c("task","annotations","folder","scaling","features","method")
+metrics <- cbind(scenarios,metrics)
+
+#metrics$method <- str_split_fixed(metrics$method,pattern = "/",n=2)[,2]
+metrics$output <- str_split_fixed(metrics$method,pattern = "_",n=2)[,2]
+metrics$tool <- str_split_fixed(metrics$method,pattern = "_",n=2)[,1]
+
+metrics_previous <- read.csv("../final_benchmark/metrics.csv",row.names = 1)
+
+#update task name to match current analysis
+# rownames(metrics_previous) <- gsub(rownames(metrics_previous) ,pattern = "human_pancreas",replacement = "human_pancreas_subtype_wrongly_assigned")
+# 
+# rownames(metrics_previous) <- gsub(rownames(metrics_previous) ,pattern = "immune_cell_hum",replacement = "immune_cell_hum_subtype_wrongly_assigned")
+# 
+# rownames(metrics_previous) <- gsub(rownames(metrics_previous) ,pattern = "tcells_atlas",replacement = "tcells_atlas_subtype_wrongly_assigned")
+# 
+# rownames(metrics_previous) <- gsub(rownames(metrics_previous) ,pattern = "lung_atlas",replacement = "lung_atlas_subtype_wrongly_assigned")
+
+
+scenarios_previous <- str_split_fixed(rownames(metrics_previous),pattern = "/",n=7)
+#head(scenarios_previous)
+
+scenarios_previous <- data.frame(scenarios_previous[,-1])
+
+colnames(scenarios_previous) <- c("task","annotations","folder","scaling","features","method")
+#scenarios_previous$method <- str_split_fixed(scenarios_previous$method,pattern = "/",n=2)[,2]
+
+
+
+keptIndex <- which((scenarios_previous$scaling %in% c("unscaled") & scenarios_previous$task %in% c("immune_cell_hum","human_pancreas","tcells_atlas","lung_atlas")) &
+                     (scenarios_previous$method %in% c("scgen_full","semiSupSTACAS_embed","STACAS_embed","scanvi_embed","scvi_embed","unintegrated_full")&
+                        scenarios_previous$annotations == "unknown_15_shuffled_20"))
+
+rn <- rownames(metrics_previous)[keptIndex]
+
+
+metrics_previous <- cbind(scenarios_previous[keptIndex,],metrics_previous[keptIndex,])
+
+rownames(metrics_previous) <- rn
+
+metrics_previous$output <- str_split_fixed(metrics_previous$method,pattern = "_",n=2)[,2]
+metrics_previous$tool <- str_split_fixed(metrics_previous$method,pattern = "_",n=2)[,1]
+
+
+metrics <- rbind(metrics,metrics_previous[,colnames(metrics)])
+```
+
+
+Regarding first analysis results with original annotations, we only analysed unscaled scenarios
+```{r}
+#TO DO will be removed from results and config file as it is now in the final_benchmark config
+metrics <- metrics[metrics$scaling == "unscaled",]
+metricsR <- metricsR[metricsR$scaling == "unscaled",]
+```
+
+
+
+
+
+
+
+
+```{r}
+rownames(metricsR) <- gsub(rownames(metricsR),pattern = "/R/",replacement = "/")
+
+metrics <- cbind(metrics, metricsR[rownames(metrics),c("CiLISI","CiLISI_means")])
+
+#Set annotation for unsup tools to original for clarity
+metrics[(metrics$method %in% c("STACAS_embed","scvi_embed","unintegrated_full") & metrics$annotations == "unknown_15_shuffled_20"),"annotations"] <- "original" 
+
+metrics$ASW_label_raw <- 2*metrics$ASW_label-1
+
+
+```
+
+
+
+## Comparison with previous noise
+```{r}
+#metrics.shuffled.neighbors <- metrics[!startsWith(metrics$annotations,"merging"),  ]
+
+ggplot(metrics[metrics$annotations %in% c("shuffledWithGuide_20","original","unknown_15_shuffled_20"),],aes(x=CiLISI,y=ASW_label_raw,color = method,shape = annotations)) + geom_point(size = 3) + facet_wrap("~task")
+```
+# Increased neighbor shuffling
+
+```{r fig.height=1.5,fig.width=5}
+data <- metrics[grepl(metrics$annotations,pattern = "shuffledWithGuide_|original"),]
+
+data$neighbor_shuffling <- str_split_fixed(data$annotations,pattern = "_",2)[,2]
+
+data$neighbor_shuffling[data$annotations == "original"] <- 0
+data$neighbor_shuffling <- as.numeric(data$neighbor_shuffling)
+
+
+ggplot(data[data$neighbor_shuffling <51,],aes(x = neighbor_shuffling,color=method,y=ASW_label_raw,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task',ncol = 4)+ theme_bw()
+
+ggplot(data,aes(x = neighbor_shuffling,color=method,y=ASW_label_raw,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task',ncol = 4)+ theme_bw()
+```
+
+```{r fig.height=1.5,fig.width=5}
+ggplot(data[data$neighbor_shuffling <51,],aes(x = neighbor_shuffling,color=method,y=CiLISI,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task',ncol = 4) + theme_bw()
+
+ggplot(data,aes(x = neighbor_shuffling,color=method,y=CiLISI,group = method)) +
+  geom_point()+ geom_line() +  facet_wrap('~task',ncol = 4) + theme_bw()
+```
+
+## Checking introduced noise
+
+```{r}
+adata <- read_h5ad("../../sensitivity_analysis_shuffling_neighbors/human_pancreas/shuffledWithGuide_45/metrics/unscaled/hvg/scgen_full.h5ad")
+colnames(adata$obs)
+
+table(adata$obs$celltype,adata$obs$shuffledWithGuide_45_celltype)
+
+```
