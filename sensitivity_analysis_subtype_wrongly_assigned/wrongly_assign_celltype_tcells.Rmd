@@ -42,19 +42,39 @@ for (c in c(1:20)) {
 
 
 ```
-
-## hiding 15% and shuffling 20% in neighbor subtypes
+## Plot distance matrix
 ```{r}
+distances.df$distance <- distances.df$value
+distances.df$distance[distances.df$distance == 0] <- NA
+
+ggplot(distances.df, aes(row, col, fill= distance)) + 
+  geom_tile() + scale_fill_gradient2(low = scales::muted("red"),
+  mid = "white",midpoint = median(distances.df$distance,na.rm = T),
+  high = scales::muted("blue")) + scale_x_discrete(guide = guide_axis(angle=45)) + xlab("") + ylab("")
+```
+
+## Getting closest neighbors
+```{r}
+library(ggplot2)
 getClosestSubtype <- function(distances) {
   res <- as.character(rownames(as.matrix(distances))[order(as.matrix(distances)[,1])[2]])
   return(res)
 }
+
+
 
 closestSubtypes <- apply(data.frame(as.matrix(distances)),MARGIN = 2,FUN = getClosestSubtype)
 names(closestSubtypes) <- rownames(as.matrix(distances))
 
 closestSubtypes
 
+write.csv(data.frame(closestSubtypes),"../configs/closest_subtypes_tcells.csv")
+
+
+
+```
+
+```{r}
 set.seed(2023)
 
 #Hiding 
@@ -76,9 +96,7 @@ adata$obs[cells.to.shuffle,"neighbor_shuffled_20_unknown_15_celltype"] <- plyr::
 
 head(adata$obs[cells.to.shuffle,c("celltype","neighbor_shuffled_20_unknown_15_celltype")],n=10)
 head(adata$obs[cells.to.hide,c("celltype","neighbor_shuffled_20_unknown_15_celltype")],n=10)
-
 ```
-
 
 ```{r fig.height=2,fig.width=3}
 hclust.res <- hclust(distances)

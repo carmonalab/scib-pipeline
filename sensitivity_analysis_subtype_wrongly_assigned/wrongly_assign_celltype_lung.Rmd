@@ -56,6 +56,14 @@ names(closestSubtypes) <- rownames(as.matrix(distances))
 
 closestSubtypes
 
+write.csv(data.frame(closestSubtypes),"../configs/closest_subtypes_lung.csv")
+
+
+```
+
+
+```{r fig.height=3,fig.width=3}
+
 set.seed(2023)
 
 #Hiding 
@@ -78,10 +86,6 @@ adata$obs[cells.to.shuffle,"neighbor_shuffled_20_unknown_15_cell_type"] <- plyr:
 head(adata$obs[cells.to.shuffle,c("cell_type","neighbor_shuffled_20_unknown_15_cell_type")],n=10)
 head(adata$obs[cells.to.hide,c("cell_type","neighbor_shuffled_20_unknown_15_cell_type")],n=10)
 
-```
-
-
-```{r fig.height=3,fig.width=3}
 hclust.res <- hclust(distances)
 
 library(ggdendro)
