@@ -1,5 +1,5 @@
 ---
-title: "Benchmark of all integration tools with noise for the supervised integration"
+title: "Benchmark supervised tools with nearest-neighbor label shuffling"
 author: "Leonard Herault"
 date: '2022-12-09'
 output: html_document
@@ -31,32 +31,10 @@ library(anndata)
 
 ```{r}
 #Move to directory of this script
-#setwd("./results/final_benchmark")
+#setwd("./results/sensitivity_analysis_shuffling_neighbors")
 
 source("../knit_table.R") 
 source("../R_fun_report.R")
-
-# tasks <- c("Pancreas_rm0",
-#            "Pancreas_rm1",
-#            "Pancreas_rm2",
-#            "Pancreas_rm3",
-#            "Pancreas_rm4",
-#            "Pancreas_rm5",
-#            "Pancreas_rm6",
-#            "Pancreas_rm7",
-#            "Pancreas_rm8",
-#            "Pancreas_rm9")
-# 
-# labels <- c("PancreasRm0",
-#            "PancreasRm1",
-#            "PancreasRm2",
-#            "PancreasRm3",
-#            "PancreasRm4",
-#            "PancreasRm5",
-#            "PancreasRm6",
-#            "PancreasRm7",
-#            "PancreasRm8",
-#            "PancreasRm9")
 ```
 
 
@@ -103,15 +81,6 @@ metricsR$tool <- str_split_fixed(metricsR$method,pattern = "_",n=2)[,1]
 
 metricsR_previous <- read.csv("../final_benchmark//metrics_R.csv",row.names = 1)
 
-#update task name to match current analysis
-# rownames(metricsR_previous) <- gsub(rownames(metricsR_previous) ,pattern = "human_pancreas",replacement = "human_pancreas_subtype_wrongly_assigned")
-# 
-# rownames(metricsR_previous) <- gsub(rownames(metricsR_previous) ,pattern = "immune_cell_hum",replacement = "immune_cell_hum_subtype_wrongly_assigned")
-# 
-# rownames(metricsR_previous) <- gsub(rownames(metricsR_previous) ,pattern = "tcells_atlas",replacement = "tcells_atlas_subtype_wrongly_assigned")
-# 
-# rownames(metricsR_previous) <- gsub(rownames(metricsR_previous) ,pattern = "lung_atlas",replacement = "lung_atlas_subtype_wrongly_assigned")
-
 
 scenarios_previous <- str_split_fixed(rownames(metricsR_previous),pattern = "/",n=7)
 #head(scenarios_previous)
@@ -157,16 +126,6 @@ metrics$tool <- str_split_fixed(metrics$method,pattern = "_",n=2)[,1]
 
 metrics_previous <- read.csv("../final_benchmark/metrics.csv",row.names = 1)
 
-#update task name to match current analysis
-# rownames(metrics_previous) <- gsub(rownames(metrics_previous) ,pattern = "human_pancreas",replacement = "human_pancreas_subtype_wrongly_assigned")
-# 
-# rownames(metrics_previous) <- gsub(rownames(metrics_previous) ,pattern = "immune_cell_hum",replacement = "immune_cell_hum_subtype_wrongly_assigned")
-# 
-# rownames(metrics_previous) <- gsub(rownames(metrics_previous) ,pattern = "tcells_atlas",replacement = "tcells_atlas_subtype_wrongly_assigned")
-# 
-# rownames(metrics_previous) <- gsub(rownames(metrics_previous) ,pattern = "lung_atlas",replacement = "lung_atlas_subtype_wrongly_assigned")
-
-
 scenarios_previous <- str_split_fixed(rownames(metrics_previous),pattern = "/",n=7)
 #head(scenarios_previous)
 
@@ -196,17 +155,12 @@ metrics <- rbind(metrics,metrics_previous[,colnames(metrics)])
 ```
 
 
-Regarding first analysis results with original annotations, we only analysed unscaled scenarios
+Compared to first analysis results with original annotations, we only analysed unscaled scenarios
 ```{r}
 #TO DO will be removed from results and config file as it is now in the final_benchmark config
 metrics <- metrics[metrics$scaling == "unscaled",]
 metricsR <- metricsR[metricsR$scaling == "unscaled",]
 ```
-
-
-
-
-
 
 
 
@@ -233,28 +187,80 @@ ggplot(metrics[metrics$annotations %in% c("shuffledWithGuide_20","original","unk
 ```
 # Increased neighbor shuffling
 
-```{r fig.height=1.5,fig.width=5}
+## ASW label score
+
+```{r fig.width=10, fig.height=2.5}
+pdir <- "pdf/overfitting"
+dir.create(pdir,recursive = T)
+
+palette <- c("#FF3333","#FF9999","#FFFF00","#996633","#FFCC66","#99CCCC")
+names(palette) <- c("semiSupSTACAS_embed","scanvi_embed","scgen_full","STACAS_embed","scvi_embed","unintegrated_full")
+shapes <- c(19,19,19,9,9,9)
+names(shapes) <- names(palette)
+
+metrics$annotations <- factor(metrics$annotations,levels = c("original", "broad",
+                                                             "shuffled_10","shuffled_20","shuffled_50","shuffled_100",
+                                                             "unknown_10", "unknown_20","unknown_50","unknown_100"))
+metrics$ASW_label_raw <- 2*metrics$ASW_label-1
+
+data <- metrics[grepl(metrics$annotations,pattern = "shuffled|original"),]
+data$method <- factor(data$method, levels=names(palette))
+
+ggplot(data, aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
+  geom_point(aes(shape=method)) + geom_line() +  facet_wrap('~task', scales="free", ncol=4) + theme_bw() +
+  scale_x_discrete(guide = guide_axis(angle = 45)) +
+  scale_color_manual(values=palette) +
+  scale_shape_manual(values=shapes)
+
+ggsave(sprintf("%s/effect_of_shuffling_ss.pdf", pdir), height=2.5, width=10)
+```
+
+
+```{r fig.width=10, fig.height=2.5}
+pdir <- "pdf/overfitting"
+dir.create(pdir,recursive = T)
+
+palette <- c("#FF3333","#FF9999","#FFFF00","#996633","#FFCC66","#99CCCC")
+names(palette) <- c("semiSupSTACAS_embed","scanvi_embed","scgen_full","STACAS_embed","scvi_embed","unintegrated_full")
+shapes <- c(19,19,19,9,9,9)
+names(shapes) <- names(palette)
+
 data <- metrics[grepl(metrics$annotations,pattern = "shuffledWithGuide_|original"),]
 
 data$neighbor_shuffling <- str_split_fixed(data$annotations,pattern = "_",2)[,2]
 
 data$neighbor_shuffling[data$annotations == "original"] <- 0
-data$neighbor_shuffling <- as.numeric(data$neighbor_shuffling)
+data <- data[as.numeric(data$neighbor_shuffling) <= 50, ]  #only makes sense up to 50% shuffle
+
+levs <- sort(unique(as.numeric(data$neighbor_shuffling)))
+data$neighbor_shuffling <- factor(data$neighbor_shuffling, levels = as.character(levs))
+
+data$ASW_label_raw <- 2*data$ASW_label-1
+
+data$method <- factor(data$method, levels=names(palette))
 
 
-ggplot(data[data$neighbor_shuffling <51,],aes(x = neighbor_shuffling,color=method,y=ASW_label_raw,group = method)) +
-  geom_point()+ geom_line() +  facet_wrap('~task',ncol = 4)+ theme_bw()
+ggplot(data,
+       aes(neighbor_shuffling,color=method,y=ASW_label_raw, group = method)) +
+  geom_point(aes(shape=method)) + geom_line() +  facet_wrap('~task', scales="free", ncol=4) + theme_bw() +
+  scale_x_discrete(guide = guide_axis(angle = 45)) +
+  scale_color_manual(values=palette) +
+  scale_shape_manual(values=shapes)
 
-ggplot(data,aes(x = neighbor_shuffling,color=method,y=ASW_label_raw,group = method)) +
-  geom_point()+ geom_line() +  facet_wrap('~task',ncol = 4)+ theme_bw()
+a <- ggsave(sprintf("%s/effect_of_shuffling_ss.pdf", pdir), height=2.5, width=10)
+a
 ```
 
-```{r fig.height=1.5,fig.width=5}
-ggplot(data[data$neighbor_shuffling <51,],aes(x = neighbor_shuffling,color=method,y=CiLISI,group = method)) +
-  geom_point()+ geom_line() +  facet_wrap('~task',ncol = 4) + theme_bw()
+```{r fig.width=10, fig.height=2.5}
+ggplot(data,
+       aes(neighbor_shuffling,color=method,y=CiLISI, group = method)) +
+  geom_point(aes(shape=method)) + geom_line() +  facet_wrap('~task', scales="free", ncol=4) + theme_bw() +
+  scale_x_discrete(guide = guide_axis(angle = 45)) +
+  scale_color_manual(values=palette) +
+  scale_shape_manual(values=shapes)
 
-ggplot(data,aes(x = neighbor_shuffling,color=method,y=CiLISI,group = method)) +
-  geom_point()+ geom_line() +  facet_wrap('~task',ncol = 4) + theme_bw()
+a <- ggsave(sprintf("%s/effect_of_shuffling_CiLISI.pdf", pdir), height=2.5, width=10)
+a
 ```
 
 ## Checking introduced noise

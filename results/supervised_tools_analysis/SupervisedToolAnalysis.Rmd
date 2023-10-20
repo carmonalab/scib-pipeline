@@ -163,7 +163,7 @@ metrics <- rbind(metrics,metrics_unaltered[,colnames(metrics)])
 ```
 
 
-Regarding first analysis results with original annotations, we only analysed unscaled scenarios
+Compared to first analysis results with original annotations, we only analysed unscaled scenarios
 ```{r}
 #TO DO will be removed from results and config file as it is now in the final_benchmark config
 metrics <- metrics[metrics$scaling == "unscaled",]
@@ -209,6 +209,25 @@ ggplot(data, aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
 ggsave(sprintf("%s/effect_of_shuffling_ss.pdf", pdir), height=2.5, width=10)
 ```
 
+## CiLISI score
+```{r fig.width=10, fig.height=2.5}
+metricsR$annotations <- factor(metricsR$annotations,levels = c("original", "broad",
+                                                               "shuffled_10","shuffled_20","shuffled_50","shuffled_100",
+                                                               "unknown_10", "unknown_20","unknown_50","unknown_100"))
+
+data <- metricsR[grepl(metricsR$annotations,pattern = "shuffled|original"),]
+
+ggplot(data, aes(x = annotations,color=method,y=CiLISI,group = method)) +
+  geom_point(aes(shape=method)) + geom_line() +  facet_wrap('~task', scales="free", ncol=4) + theme_bw() +
+  scale_x_discrete(guide = guide_axis(angle = 45)) +
+  scale_color_manual(values=palette) +
+  scale_shape_manual(values=shapes)
+
+ggsave(sprintf("%s/effect_of_shuffling_CiLISI.pdf", pdir), height=2.5, width=10)
+```
+
+
+
 # Unknown labels analysis
 
 ## ASW label score
@@ -227,38 +246,22 @@ ggsave(sprintf("%s/effect_of_unknown_ss.pdf", pdir), height=2.5, width=10)
 ```
 
 ## CiLISI score
-```{r}
-metricsR$annotations <- factor(metricsR$annotations,levels = c("original", "broad",
-                                                               "shuffled_10","shuffled_20","shuffled_50","shuffled_100",
+```{r fig.width=10, fig.height=2.5}
+metricsR$annotations <- factor(metricsR$annotations,levels = c("original",
                                                                "unknown_10", "unknown_20","unknown_50","unknown_100"))
 
-data <- metricsR[grepl(metricsR$annotations,pattern = "shuffled|original"),]
-
-ggplot(data,aes(x = annotations,color=method,y=CiLISI,group = method)) +
-  geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
-  scale_x_discrete(guide = guide_axis(angle = 45))
-```
-
-# Partial annotation analysis
-
-## ASW label score
-```{r}
-data <- metrics[grepl(metrics$annotations,pattern = "unknown|original"),]
-
-ggplot(data,aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
-  geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
-  scale_x_discrete(guide = guide_axis(angle = 45))
-```
-
-## CiLISI score
-
-```{r}
 data <- metricsR[grepl(metricsR$annotations,pattern = "unknown|original"),]
 
-ggplot(data,aes(x = annotations,color=method,y=CiLISI,group = method)) +
-  geom_point()+ geom_line() +  facet_wrap('~task') + theme_bw() +
-  scale_x_discrete(guide = guide_axis(angle = 45))
+ggplot(data, aes(x = annotations,color=method,y=CiLISI,group = method)) +
+  geom_point(aes(shape=method)) + geom_line() +  facet_wrap('~task', scales="free", ncol=4) + theme_bw() +
+  scale_x_discrete(guide = guide_axis(angle = 45)) +
+  scale_color_manual(values=palette) +
+  scale_shape_manual(values=shapes)
+
+ggsave(sprintf("%s/effect_of_unknown_CiLISI.pdf", pdir), height=2.5, width=10)
 ```
+
+
 # Broad annotation analysis
 
 None (no altered annotations) refers to the original fine annotations.
