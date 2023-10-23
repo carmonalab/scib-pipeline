@@ -54,8 +54,8 @@ if (!file.exists("./metrics.csv")) {
 
 
 It also requires the files
--   `../original_annotations/metrics_R.csv`
--   `../original_annotations/metrics.csv`
+-   `../original_annotations_50_comp/metrics_R.csv`
+-   `../original_annotations_50_comp/metrics.csv`
 
 generated with the snakemake pipeline using the config file `configs/test_original_annotations-R4.1.yaml`.
 First we copy them in the `results/original_annotations_50_comp` directory (already done in the repository)
