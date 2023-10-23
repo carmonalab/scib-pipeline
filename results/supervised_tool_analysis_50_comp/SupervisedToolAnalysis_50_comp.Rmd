@@ -186,7 +186,7 @@ metrics <- metrics[metrics$annotations != "unknown_15_shuffled_20",]
 pdir <- "pdf/overfitting"
 dir.create(pdir,recursive = T)
 
-palette <- c("#FF3333","#FF9999","#FFFF00","#996633","#FFCC66","#99CCCC")
+palette <- c("#FF3333","#FF9999","#DED720","#996633","#FF9D01","#99CCCC")
 names(palette) <- c("semiSupSTACAS_embed","scanvi_embed","scgen_full","STACAS_embed","scvi_embed","unintegrated_full")
 shapes <- c(19,19,19,9,9,9)
 names(shapes) <- names(palette)
@@ -258,7 +258,7 @@ ggplot(data, aes(x = annotations,color=method,y=CiLISI,group = method)) +
 ggsave(sprintf("%s/effect_of_unknown_CiLISI.pdf", pdir), height=2.5, width=10)
 ```
 
-# Partial annotation analysis
+
 
 
 # Broad annotation analysis

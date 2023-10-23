@@ -193,37 +193,11 @@ ggplot(metrics[metrics$annotations %in% c("shuffledWithGuide_20","original","unk
 pdir <- "pdf/overfitting"
 dir.create(pdir,recursive = T)
 
-palette <- c("#FF3333","#FF9999","#FFFF00","#996633","#FFCC66","#99CCCC")
+palette <- c("#FF3333","#FF9999","#DED720","#996633","#FF9D01","#99CCCC")
 names(palette) <- c("semiSupSTACAS_embed","scanvi_embed","scgen_full","STACAS_embed","scvi_embed","unintegrated_full")
 shapes <- c(19,19,19,9,9,9)
 names(shapes) <- names(palette)
 
-metrics$annotations <- factor(metrics$annotations,levels = c("original", "broad",
-                                                             "shuffled_10","shuffled_20","shuffled_50","shuffled_100",
-                                                             "unknown_10", "unknown_20","unknown_50","unknown_100"))
-metrics$ASW_label_raw <- 2*metrics$ASW_label-1
-
-data <- metrics[grepl(metrics$annotations,pattern = "shuffled|original"),]
-data$method <- factor(data$method, levels=names(palette))
-
-ggplot(data, aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
-  geom_point(aes(shape=method)) + geom_line() +  facet_wrap('~task', scales="free", ncol=4) + theme_bw() +
-  scale_x_discrete(guide = guide_axis(angle = 45)) +
-  scale_color_manual(values=palette) +
-  scale_shape_manual(values=shapes)
-
-ggsave(sprintf("%s/effect_of_shuffling_ss.pdf", pdir), height=2.5, width=10)
-```
-
-
-```{r fig.width=10, fig.height=2.5}
-pdir <- "pdf/overfitting"
-dir.create(pdir,recursive = T)
-
-palette <- c("#FF3333","#FF9999","#FFFF00","#996633","#FFCC66","#99CCCC")
-names(palette) <- c("semiSupSTACAS_embed","scanvi_embed","scgen_full","STACAS_embed","scvi_embed","unintegrated_full")
-shapes <- c(19,19,19,9,9,9)
-names(shapes) <- names(palette)
 
 data <- metrics[grepl(metrics$annotations,pattern = "shuffledWithGuide_|original"),]
 
