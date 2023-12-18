@@ -31,7 +31,7 @@ library(anndata)
 
 ```{r}
 #Move to directory of this script
-#setwd("./results/final_benchmark")
+#setwd("./results/final_benchmark_50_comp")
 
 source("../knit_table.R") 
 source("../R_fun_report.R")
@@ -206,6 +206,9 @@ for (t in unique(metrics$task)) {
 #    ggsave(fname, plot=p, width=7, height=5)
      ggsave(fname, plot=p, width=5.5, height=4)
     
+    #Save source data 
+    source <- metricsSub[metricsSub$methodLong %in% methodToCompare, c("task","toolF","scalingF","CiLISI","ASW_label_raw")]
+    write.csv(x=source, file=sprintf("%s.%s.50pc.source.csv",t,n))
   }
 }
 ```

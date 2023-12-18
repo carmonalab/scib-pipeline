@@ -206,6 +206,12 @@ ggplot(data, aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
   scale_shape_manual(values=shapes)
 
 ggsave(sprintf("%s/effect_of_shuffling_ss.pdf", pdir), height=2.5, width=10)
+
+#Source data
+source <- data[,c("task","tool","annotations","ASW_label_raw")] 
+source <- source[with(source, order(task, tool, annotations)),]
+
+write.csv(x=source, file="shuffle_50pc_ASW.csv")
 ```
 
 ## CiLISI score
@@ -223,7 +229,15 @@ ggplot(data, aes(x = annotations,color=method,y=CiLISI,group = method)) +
   scale_shape_manual(values=shapes)
 
 ggsave(sprintf("%s/effect_of_shuffling_CiLISI.pdf", pdir), height=2.5, width=10)
+
+#Source data
+source <- data[,c("task","tool","annotations","CiLISI")] 
+source <- source[with(source, order(task, tool, annotations)),]
+
+write.csv(x=source, file="shuffle_50pc_CiLISI.csv")
 ```
+
+
 
 # Unknown labels analysis
 
@@ -240,6 +254,12 @@ ggplot(data, aes(x = annotations,color=method,y=ASW_label_raw,group = method)) +
   scale_shape_manual(values=shapes)
 
 ggsave(sprintf("%s/effect_of_unknown_ss.pdf", pdir), height=2.5, width=10)
+
+#Source data
+source <- data[,c("task","tool","annotations","ASW_label_raw")] 
+source <- source[with(source, order(task, tool, annotations)),]
+
+write.csv(x=source, file="unknown_50pc_ASW.csv")
 ```
 
 ## CiLISI score
@@ -256,6 +276,12 @@ ggplot(data, aes(x = annotations,color=method,y=CiLISI,group = method)) +
   scale_shape_manual(values=shapes)
 
 ggsave(sprintf("%s/effect_of_unknown_CiLISI.pdf", pdir), height=2.5, width=10)
+
+#Source data
+source <- data[,c("task","tool","annotations","CiLISI")] 
+source <- source[with(source, order(task, tool, annotations)),]
+
+write.csv(x=source, file="unknown_50pc_CiLISI.csv")
 ```
 
 

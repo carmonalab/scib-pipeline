@@ -225,6 +225,12 @@ ggplot(data,
 
 a <- ggsave(sprintf("%s/effect_of_shuffling_ss.pdf", pdir), height=2.5, width=10)
 a
+
+#Source data
+source <- data[,c("task","tool","neighbor_shuffling","ASW_label_raw")] 
+source <- source[with(source, order(task, tool, neighbor_shuffling)),]
+
+write.csv(x=source, file="neighbor_shuffle_ASW.csv")
 ```
 
 ```{r fig.width=10, fig.height=2.5}
@@ -237,6 +243,12 @@ ggplot(data,
 
 a <- ggsave(sprintf("%s/effect_of_shuffling_CiLISI.pdf", pdir), height=2.5, width=10)
 a
+
+#Source data
+source <- data[,c("task","tool","neighbor_shuffling","CiLISI")] 
+source <- source[with(source, order(task, tool, neighbor_shuffling)),]
+
+write.csv(x=source, file="neighbor_shuffle_CiLISI.csv")
 ```
 
 ## Checking introduced noise
